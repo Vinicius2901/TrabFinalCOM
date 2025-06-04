@@ -32,6 +32,7 @@ import qualified Lex as L -- Todas as func desse modulo devem ser usados com o L
   'float' {DECFLOAT}
   'string' {DECSTRING}
   ';' {FIMLINHA}
+  ',' {VIRGULA}
   NumDouble {NUMDOUBLE $$}
   NumInt {NUMINT $$} -- Cifrão diz qual valor vai ser pego como atributo do não terminal
   Id {ID $$}
@@ -52,49 +53,56 @@ import qualified Lex as L -- Todas as func desse modulo devem ser usados com o L
 --       | '-' Factor	    {negate $2} -- '-' como operador unário (tem maior precedência)
 
 
-Inicio : Expr          {Expr $1}
-       | ExprL         {ExprL $1}
-      --  | Var           {Var $1}
+Inicio : Expr                                {Expr $1}
+       | ExprL                               {ExprL $1}
+       | Declaracoes                         {Vars $1}
+      --  | DecFuncs                            {Funcs $1}
 
--- Var : Var Tipo IdVar ';'          {$1 $2 $3}
---     | Tipo IdVar ';'              {$1 $2}
-
--- Tipo : 'int'                      {TInt}
---      | 'float'                    {TDouble}
---      | 'string'                   {TString}
-
-ExprL : ExprL '||' TermL {Or $1 $3}
-      | ExprL '&&' TermL {And $1 $3}
-      | TermL {$1}
-
-TermL : '!' TermL {Not $2}
-      | ExprR {Rel $1}
-
-ExprR : Expr '==' Expr {Req $1 $3}
-      | Expr '/=' Expr {Rdif $1 $3}
-      | Expr '<=' Expr {Rle $1 $3}
-      | Expr '<' Expr  {Rlt $1 $3}
-      | Expr '>=' Expr {Rge $1 $3}
-      | Expr '>' Expr  {Rgt $1 $3}
+Tipo  : 'int'                                {TInt}
+      | 'float'                              {TDouble}
+      | 'string'                             {TString}
 
 
-Expr  : Expr '+' Term       {Add $1 $3} -- Expr recebe a posição 1 da produção somada à posição 3 da produção (E.val = E1.val + T.val)
-      | Expr '-' Term       {Sub $1 $3} -- Expr recebe a subtração da posição 1 da produção com a posução 3 da produção(E.val = E1.val - T.val) -> '-' aqui é operador binário
-      | Term                {$1} -- Expr recebe a posição 1 da produção(E.val = T.val)
+Declaracoes  : Declaracoes Declaracao        {$1 ++ $2}
+             | Declaracao                    {$1}
 
-Term  : Term  '*' Factor    {Mul $1 $3}
-      | Term '/' Factor     {Div $1 $3}
-      | Factor              {$1}
+Declaracao   : Tipo ListaId ';'              {map(\x -> x:#: ($1, 0)) $2}
 
-Factor : TConst             {Const $1}
-       | '(' Expr ')'       {$2}
-       | '-' Factor	    {Neg $2} -- '-' como operador unário (tem maior precedência)
-       | IdVar              {IdVar $1}
+ListaId : ListaId ',' IdVar                  {$1 ++ [$3]} 
+	  | IdVar                              {[$1]} 
 
-IdVar  : Id                 {$1}
+ExprL : ExprL '||' TermL                     {Or $1 $3}
+      | ExprL '&&' TermL                     {And $1 $3}
+      | TermL                                {$1}
 
-TConst : NumInt             {CInt $1}
-       | NumDouble          {CDouble $1}
+TermL : '!' TermL                            {Not $2}
+      | ExprR                                {Rel $1}
+
+ExprR : Expr '==' Expr                       {Req $1 $3}
+      | Expr '/=' Expr                       {Rdif $1 $3}
+      | Expr '<=' Expr                       {Rle $1 $3}
+      | Expr '<' Expr                        {Rlt $1 $3}
+      | Expr '>=' Expr                       {Rge $1 $3}
+      | Expr '>' Expr                        {Rgt $1 $3}
+
+
+Expr  : Expr '+' Term                        {Add $1 $3} -- Expr recebe a posição 1 da produção somada à posição 3 da produção (E.val = E1.val + T.val)
+      | Expr '-' Term                        {Sub $1 $3} -- Expr recebe a subtração da posição 1 da produção com a posução 3 da produção(E.val = E1.val - T.val) -> '-' aqui é operador binário
+      | Term                                 {$1}        -- Expr recebe a posição 1 da produção(E.val = T.val)
+
+Term  : Term  '*' Factor                     {Mul $1 $3}
+      | Term '/' Factor                      {Div $1 $3}
+      | Factor                               {$1}
+
+Factor : TConst                              {Const $1}
+       | '(' Expr ')'                        {$2}
+       | '-' Factor	                     {Neg $2} -- '-' como operador unário (tem maior precedência)
+       | IdVar                               {IdVar $1}
+
+IdVar  : Id                                  {$1}
+
+TConst : NumInt                              {CInt $1}
+       | NumDouble                           {CDouble $1}
 
 
 
@@ -107,4 +115,6 @@ main = do putStr "Expressão:"
           case calc(L.alexScanTokens s) of
             Expr v -> print v
             ExprL v -> print v
+            Vars v -> print v
+            -- Funcs v -> print v
 }
