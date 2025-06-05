@@ -13,30 +13,46 @@ import qualified Lex as L -- Todas as func desse modulo devem ser usados com o L
 %tokentype { Token } -- Nome do tipo de dado retornado pelo léxico
 %error { parseError } -- Função chamada em situação de erro
 %token 
-  '+' {ADD}
-  '-' {SUB}
-  '*' {MUL}
-  '/' {DIV}
-  '(' {LPAR}
-  ')' {RPAR}
-  '==' {REQ}
-  '/=' {RNE}
-  '<=' {RLE}
-  '<' {RLT}
-  '>=' {RGE}
-  '>' {RGT}
-  '||' {OR}
-  '&&' {AND}
-  '!' {NOT}
-  'int' {DECINT}
-  'float' {DECFLOAT}
-  'string' {DECSTRING}
-  ';' {FIMLINHA}
-  ',' {VIRGULA}
-  NumDouble {NUMDOUBLE $$}
-  NumInt {NUMINT $$} -- Cifrão diz qual valor vai ser pego como atributo do não terminal
-  Id {ID $$}
 
+-- Operações aritiméticas
+  '+'       {ADD}
+  '-'       {SUB}
+  '*'       {MUL}
+  '/'       {DIV}
+  '('       {LPAR}
+  ')'       {RPAR}
+
+-- Operadores Relacionais
+  '=='      {REQ}
+  '/='      {RNE}
+  '<='      {RLE}
+  '<'       {RLT}
+  '>='      {RGE}
+  '>'       {RGT}
+
+-- Operadores Lógicos
+  '||'      {OR}
+  '&&'      {AND}
+  '!'       {NOT}
+
+-- Declarações
+  'int'     {DECINT}
+  'float'   {DECFLOAT}
+  'string'  {DECSTRING}
+  ';'       {FIMLINHA}
+  ','       {VIRGULA}
+
+-- Comandos
+  'if'      {IF}
+  'else'    {ELSE}
+  'return'  {RET}
+  '{'       {LBRACK}
+  '}'       {RBRACK}
+
+  NumDouble {NUMDOUBLE $$}
+  NumInt    {NUMINT $$} -- Cifrão diz qual valor vai ser pego como atributo do não terminal
+  Id        {ID $$}
+  Literal   {LIT $$}
 
 %%
 
@@ -56,11 +72,38 @@ import qualified Lex as L -- Todas as func desse modulo devem ser usados com o L
 Inicio : Expr                                {Expr $1}
        | ExprL                               {ExprL $1}
        | Declaracoes                         {Vars $1}
+       | Bloco                               {Bloco $1}
       --  | DecFuncs                            {Funcs $1}
 
 Tipo  : 'int'                                {TInt}
       | 'float'                              {TDouble}
       | 'string'                             {TString}
+
+Bloco : '{' ListaCmd '}'                     {$2}
+
+ListaCmd : ListaCmd Cmd                      {$1 ++ [$2]}
+         | Cmd                               {[$1]}
+
+Cmd : CmdSe                                  {$1}
+--     | CmdEnquanto
+--     | CmdAtrib
+--     | CmdEscrita
+--     | CmdLeitura
+--     | CmdEscrita
+--     | ChamadaProc
+    | Retorno                                {$1}
+
+Retorno : 'return' Expr ';'                   {Ret (Just $2)}
+      --   | 'return' Literal ';'                {Ret (Just $2)}
+        | 'return' ';'                        {Ret Nothing}
+
+CmdSe : 'if' '(' ExprL ')' Bloco              {If $3 $5 []}
+      | 'if' '(' ExprL ')' Bloco 'else' Bloco {If $3 $5 $7}
+
+-- CmdAtrib : 'id' '=' Expr ';'
+--          | 'id' '=' Literal ';'
+
+-- CmdEscrita : 
 
 
 Declaracoes  : Declaracoes Declaracao        {$1 ++ $2}
@@ -116,5 +159,6 @@ main = do putStr "Expressão:"
             Expr v -> print v
             ExprL v -> print v
             Vars v -> print v
+            Bloco v -> print v
             -- Funcs v -> print v
 }

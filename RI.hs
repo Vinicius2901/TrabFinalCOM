@@ -5,6 +5,7 @@ type Id = String
 data Inicio = Expr Expr
             | ExprL ExprL
             | Vars [Var] 
+            | Bloco Bloco
             | Funcs [Funcao] deriving Show
 
 data Tipo = TDouble 

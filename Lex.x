@@ -12,7 +12,7 @@ $character = [a-zA-Z]
 @numInt = $digit+
 @Id = ($character($character+ | $digit+ | _+)*) 
     | (_(($character | $digit | _)+)) 
-
+@literal = \"[^ \"]*\" 
 
 tokens :-
 
@@ -46,6 +46,13 @@ tokens :-
 <0> "string"     {\s -> DECSTRING}
 <0> "void"       {\s -> DECVOID}
 
+-- Comandos
+<0> "if"         {\s -> IF}
+<0> "else"       {\s -> ELSE}
+<0> "return"     {\s -> RET}
+<0> "{"          {\s -> LBRACK}
+<0> "}"          {\s -> RBRACK}
+
 -- ',' e ';'
 <0> ","          {\s -> VIRGULA}
 <0> ";"          {\s -> FIMLINHA}
@@ -54,6 +61,7 @@ tokens :-
 <0> @Id          {\s -> ID s}
 <0> @numInt      {\s -> NUMINT (read s)}
 <0> @numDouble   {\s -> NUMDOUBLE (read s)} -- read = func da biblioteca padrão de haskell que recebe uma string em um tipo a, nesse caso, double, pois @num é double
+<0> @literal     {\s -> LIT (read s)}
 
 -- Erro de reconhecimento de simbolo
 <0> . {\s -> ERROR("Fez caquinha")}

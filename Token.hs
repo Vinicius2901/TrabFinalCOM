@@ -38,14 +38,18 @@ data Token
   | DECINT
   | DECFLOAT
   | DECSTRING
+  | LIT String
   | DECVOID
 
   -- Comandos
   | IF
+  | ELSE
   | WHILE
   | PRINT
   | READ
-  | RETURN
+  | RET
+  | LBRACK
+  | RBRACK
 
   -- ',' e ';'
   | FIMLINHA
