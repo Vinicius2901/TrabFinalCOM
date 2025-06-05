@@ -44,6 +44,7 @@ data Token
   -- Comandos
   | IF
   | ELSE
+  | ATRIB
   | WHILE
   | PRINT
   | READ

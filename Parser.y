@@ -45,6 +45,8 @@ import qualified Lex as L -- Todas as func desse modulo devem ser usados com o L
 -- Comandos
   'if'      {IF}
   'else'    {ELSE}
+  'while'   {WHILE}
+  '='       {ATRIB}
   'return'  {RET}
   '{'       {LBRACK}
   '}'       {RBRACK}
@@ -85,12 +87,12 @@ ListaCmd : ListaCmd Cmd                      {$1 ++ [$2]}
          | Cmd                               {[$1]}
 
 Cmd : CmdSe                                  {$1}
---     | CmdEnquanto
---     | CmdAtrib
---     | CmdEscrita
---     | CmdLeitura
---     | CmdEscrita
---     | ChamadaProc
+    | CmdEnquanto                            {$1}
+    | CmdAtrib                               {$1}
+--     | CmdEscrita                             {$1}
+--     | CmdLeitura                             {$1}
+--     | CmdEscrita                             {$1}
+--     | ChamadaProc                            {$1}
     | Retorno                                {$1}
 
 Retorno : 'return' Expr ';'                   {Ret (Just $2)}
@@ -100,8 +102,10 @@ Retorno : 'return' Expr ';'                   {Ret (Just $2)}
 CmdSe : 'if' '(' ExprL ')' Bloco              {If $3 $5 []}
       | 'if' '(' ExprL ')' Bloco 'else' Bloco {If $3 $5 $7}
 
--- CmdAtrib : 'id' '=' Expr ';'
---          | 'id' '=' Literal ';'
+CmdEnquanto : 'while' '(' ExprL ')' Bloco     {While $3 $5} 
+
+CmdAtrib : IdVar '=' Expr ';'                  {Atrib $1 $3}
+      --    | IdVar '=' Literal ';'               {Atrib $1 $3}
 
 -- CmdEscrita : 
 
