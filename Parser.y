@@ -118,6 +118,9 @@ Factor : TConst                              {Const $1}
        | '(' Expr ')'                        {$2}
        | '-' Factor	                     {Neg $2} -- '-' como operador unário (tem maior precedência)
        | IdVar                               {IdVar $1}
+       | Lit                                 {Lit $1}
+
+Lit    : Literal                             {$1}
 
 IdVar  : Id                                  {$1}
 
