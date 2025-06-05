@@ -47,6 +47,8 @@ import qualified Lex as L -- Todas as func desse modulo devem ser usados com o L
   'else'    {ELSE}
   'while'   {WHILE}
   '='       {ATRIB}
+  'print'   {ESCR}
+  'read'    {LEIT}
   'return'  {RET}
   '{'       {LBRACK}
   '}'       {RBRACK}
@@ -80,35 +82,6 @@ Inicio : Expr                                {Expr $1}
 Tipo  : 'int'                                {TInt}
       | 'float'                              {TDouble}
       | 'string'                             {TString}
-
-Bloco : '{' ListaCmd '}'                     {$2}
-
-ListaCmd : ListaCmd Cmd                      {$1 ++ [$2]}
-         | Cmd                               {[$1]}
-
-Cmd : CmdSe                                  {$1}
-    | CmdEnquanto                            {$1}
-    | CmdAtrib                               {$1}
---     | CmdEscrita                             {$1}
---     | CmdLeitura                             {$1}
---     | CmdEscrita                             {$1}
---     | ChamadaProc                            {$1}
-    | Retorno                                {$1}
-
-Retorno : 'return' Expr ';'                   {Ret (Just $2)}
-      --   | 'return' Literal ';'                {Ret (Just $2)}
-        | 'return' ';'                        {Ret Nothing}
-
-CmdSe : 'if' '(' ExprL ')' Bloco              {If $3 $5 []}
-      | 'if' '(' ExprL ')' Bloco 'else' Bloco {If $3 $5 $7}
-
-CmdEnquanto : 'while' '(' ExprL ')' Bloco     {While $3 $5} 
-
-CmdAtrib : IdVar '=' Expr ';'                  {Atrib $1 $3}
-      --    | IdVar '=' Literal ';'               {Atrib $1 $3}
-
--- CmdEscrita : 
-
 
 Declaracoes  : Declaracoes Declaracao        {$1 ++ $2}
              | Declaracao                    {$1}
@@ -150,6 +123,44 @@ IdVar  : Id                                  {$1}
 
 TConst : NumInt                              {CInt $1}
        | NumDouble                           {CDouble $1}
+
+
+Bloco : '{' ListaCmd '}'                     {$2}
+
+ListaCmd : ListaCmd Cmd                      {$1 ++ [$2]}
+         | Cmd                               {[$1]}
+
+Cmd : CmdSe                                  {$1}
+    | CmdEnquanto                            {$1}
+    | CmdAtrib                               {$1}
+    | CmdEscrita                             {$1}
+    | CmdLeitura                             {$1}
+    | ChamadaProc                            {$1}
+    | Retorno                                {$1}
+
+Retorno : 'return' Expr ';'                   {Ret (Just $2)}
+      --   | 'return' Literal ';'                {Ret (Just $2)}
+        | 'return' ';'                        {Ret Nothing}
+
+CmdSe : 'if' '(' ExprL ')' Bloco              {If $3 $5 []}
+      | 'if' '(' ExprL ')' Bloco 'else' Bloco {If $3 $5 $7}
+
+CmdEnquanto : 'while' '(' ExprL ')' Bloco     {While $3 $5} 
+
+CmdAtrib : IdVar '=' Expr ';'                  {Atrib $1 $3}
+      --    | IdVar '=' Literal ';'               {Atrib $1 $3}
+
+CmdEscrita : 'print' '(' Expr ')' ';'        {Imp $3}
+
+CmdLeitura : 'read' '(' IdVar ')' ';'        {Leitura $3}
+
+ChamadaProc : ChamaFunc ';'                  {$1}
+
+ChamaFunc : IdVar '(' ListaParam ')'         {Proc $1 $3}
+          | IdVar '(' ')'                    {Proc $1 []}
+
+ListaParam : ListaParam ',' Expr             {$1 ++ [$3]}
+           | Expr                            {[$1]}
 
 
 

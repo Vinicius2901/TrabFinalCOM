@@ -51,6 +51,8 @@ tokens :-
 <0> "else"       {\s -> ELSE}
 <0> "while"      {\s -> WHILE}
 <0> "="          {\s -> ATRIB}
+<0> "print"      {\s -> ESCR}
+<0> "read"       {\s -> LEIT}
 <0> "return"     {\s -> RET}
 <0> "{"          {\s -> LBRACK}
 <0> "}"          {\s -> RBRACK}

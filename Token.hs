@@ -46,8 +46,8 @@ data Token
   | ELSE
   | ATRIB
   | WHILE
-  | PRINT
-  | READ
+  | ESCR
+  | LEIT
   | RET
   | LBRACK
   | RBRACK
