@@ -39,6 +39,7 @@ import qualified Lex as L -- Todas as func desse modulo devem ser usados com o L
   'int'     {DECINT}
   'float'   {DECFLOAT}
   'string'  {DECSTRING}
+  'void'    {DECVOID}
   ';'       {FIMLINHA}
   ','       {VIRGULA}
 
@@ -59,16 +60,30 @@ import qualified Lex as L -- Todas as func desse modulo devem ser usados com o L
   Literal   {LIT $$}
 
 %%
-
+-- TODO: Programa, BlocoPrinc, DecFuncs!!!!
 Inicio         : Expr                                {Expr $1}
                | ExprL                               {ExprL $1}
-               | Declaracoes                         {Vars $1}
+              --  | Declaracoes                         {Vars $1}
                | Bloco                               {Bloco $1}
+               | DeclParams                          {DeclParams $1}
            --  | DecFuncs                            {Funcs $1}
 
 Tipo           : 'int'                               {TInt}
                | 'float'                             {TDouble}
                | 'string'                            {TString}
+
+
+
+TipoRet        : Tipo                                {$1}
+               | 'void'                              {$1}
+
+DeclParams     : DeclParams ',' Param                {$1 ++ [$3]}
+               | Param                               {[$1]}
+
+Param          : Tipo IdVar                          {$2 :#: ($1, 0)}
+
+-- BlocoPrinc     : '{' Declaracoes ListaCmd '}'
+--                | '{' ListaCmd '}'
 
 Declaracoes    : Declaracoes Declaracao              {$1 ++ $2}
                | Declaracao                          {$1}
@@ -76,7 +91,7 @@ Declaracoes    : Declaracoes Declaracao              {$1 ++ $2}
 Declaracao     : Tipo ListaId ';'                    {map(\x -> x:#: ($1, 0)) $2}
 
 ListaId        : ListaId ',' IdVar                   {$1 ++ [$3]} 
-	         | IdVar                               {[$1]} 
+	             | IdVar                               {[$1]} 
 
 ExprL          : ExprL '||' TermL                    {Or $1 $3}
                | ExprL '&&' TermL                    {And $1 $3}
@@ -103,7 +118,7 @@ Term           : Term  '*' Factor                    {Mul $1 $3}
 
 Factor         : TConst                             {Const $1}
                | '(' Expr ')'                       {$2}
-               | '-' Factor	                      {Neg $2} -- '-' como operador unário (tem maior precedência)
+               | '-' Factor	                        {Neg $2} -- '-' como operador unário (tem maior precedência)
                | IdVar                              {IdVar $1}
                | Lit                                {Lit $1}
 
@@ -144,8 +159,8 @@ CmdLeitura     : 'read' '(' IdVar ')' ';'              {Leitura $3}
 
 ChamadaProc    : ChamaFunc ';'                         {$1}
 
-ChamaFunc      : IdVar '(' ListaParam ')'              {Proc $1 $3}
-               | IdVar '(' ')'                         {Proc $1 []}
+ChamaFunc      : Id '(' ListaParam ')'              {Proc $1 $3}
+               | Id '(' ')'                         {Proc $1 []}
 
 ListaParam     : ListaParam ',' Expr                   {$1 ++ [$3]}
                | Expr                                  {[$1]}
@@ -163,5 +178,6 @@ main = do putStr "Expressão:"
             ExprL v -> print v
             Vars v -> print v
             Bloco v -> print v
+            -- DeclParams v -> print v
             -- Funcs v -> print v
 }

@@ -6,6 +6,7 @@ data Inicio = Expr Expr
             | ExprL ExprL
             | Vars [Var] 
             | Bloco Bloco
+            -- | DeclParams [Var]
             | Funcs [Funcao] deriving Show
 
 data Tipo = TDouble 
