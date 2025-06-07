@@ -65,25 +65,29 @@ Inicio         : Expr                                {Expr $1}
                | ExprL                               {ExprL $1}
               --  | Declaracoes                         {Vars $1}
                | Bloco                               {Bloco $1}
-               | DeclParams                          {DeclParams $1}
-           --  | DecFuncs                            {Funcs $1}
+              --  | DeclParams                          {DeclParams $1}
+              --  | DeclFuncs                           {Funcs $1}
 
 Tipo           : 'int'                               {TInt}
                | 'float'                             {TDouble}
                | 'string'                            {TString}
 
+-- DeclFuncs      : DeclFuncs Func                      {$1 ++ [$2]}
+--                | Func                                {[$1]}
 
+-- Func           : TipoRet Id '(' DeclParams ')' BlocoPrinc {($2 :->: ($4, $1), $6)}
+--                | TipoRet Id '(' ')' BlocoPrinc            {($2 :->: ([], $1), $5)}
 
-TipoRet        : Tipo                                {$1}
-               | 'void'                              {$1}
+-- TipoRet        : Tipo                                {$1}
+--                | 'void'                              {DECVOID}
 
-DeclParams     : DeclParams ',' Param                {$1 ++ [$3]}
-               | Param                               {[$1]}
+-- DeclParams     : DeclParams ',' Param                {$1 ++ [$3]}
+--                | Param                               {[$1]}
 
-Param          : Tipo IdVar                          {$2 :#: ($1, 0)}
+-- Param          : Tipo IdVar                          {$2 :#: ($1, 0)}
 
--- BlocoPrinc     : '{' Declaracoes ListaCmd '}'
---                | '{' ListaCmd '}'
+-- BlocoPrinc     : '{' Declaracoes ListaCmd '}'        {($1, $2)}
+--                | '{' ListaCmd '}'                    {([], $2)}
 
 Declaracoes    : Declaracoes Declaracao              {$1 ++ $2}
                | Declaracao                          {$1}
