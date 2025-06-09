@@ -64,8 +64,12 @@ import qualified Lex as L -- Todas as func desse modulo devem ser usados com o L
 Inicio         : Expr                                {Expr $1}
               --  | ExprL                               {ExprL $1}
               --  | Declaracoes                         {Vars $1}
+               | ExprL                               {ExprL $1}
+              --  | Declaracoes                         {Vars $1}
               --  | Bloco                               {Bloco $1}
               --  | DeclParams                          {DeclParams $1}
+               | DeclFuncs                           {Funcs $1}
+              --  | BlocoPrinc                          {BlocoPrinci $1}
                | DeclFuncs                           {Funcs $1}
               --  | BlocoPrinc                          {BlocoPrinci $1}
 
@@ -75,16 +79,25 @@ Tipo           : 'int'                               {TInt}    -- Tipo retorna o
 
 DeclFuncs      : DeclFuncs Func                      {$1 ++ [$2]}
                | Func                                {[$1]}
+DeclFuncs      : DeclFuncs Func                      {$1 ++ [$2]}
+               | Func                                {[$1]}
 
+Func           : TipoRet Id '(' DeclParams ')' BlocoPrinc {($2 :->: ($4, $1),($2, fst($6), snd($6)))}
+               | TipoRet Id '(' ')' BlocoPrinc            {($2 :->: ([], $1),($2, fst($5), snd($5)))}
 Func           : TipoRet Id '(' DeclParams ')' BlocoPrinc {($2 :->: ($4, $1),($2, fst($6), snd($6)))}
                | TipoRet Id '(' ')' BlocoPrinc            {($2 :->: ([], $1),($2, fst($5), snd($5)))}
 
 TipoRet        : Tipo                                {$1}
                | 'void'                              {TVoid}
+TipoRet        : Tipo                                {$1}
+               | 'void'                              {TVoid}
 
 DeclParams     : DeclParams ',' Param                {$1 ++ [$3]}
                | Param                               {[$1]}
+DeclParams     : DeclParams ',' Param                {$1 ++ [$3]}
+               | Param                               {[$1]}
 
+Param          : Tipo IdVar                          {$2 :#: ($1, 0)}
 Param          : Tipo IdVar                          {$2 :#: ($1, 0)}
 
 BlocoPrinc     : '{' Declaracoes ListaCmd '}'        {($2, $3)} -- BlocoPrincipal retorna uma lista de variáveis e uma lista de comandos, sendo possível representar esse retorno por uma tupla: ([Var], [Cmd])
@@ -189,6 +202,10 @@ main = do putStr "Expressão:"
             -- Vars v -> print v
             -- Bloco v -> print v
             -- BlocoPrinci v -> print v
+            -- Vars v -> print v
+            -- Bloco v -> print v
+            -- BlocoPrinci v -> print v
             -- DeclParams v -> print v
+            Funcs v -> print v
             Funcs v -> print v
 }
