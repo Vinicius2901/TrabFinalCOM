@@ -6,8 +6,8 @@ data Inicio = Expr Expr
             | ExprL ExprL
             | Vars [Var] 
             | Bloco Bloco
-            -- | DeclParams [Var]
-            | Funcs [Funcao] deriving Show
+            | Funcs [Funcao] 
+            | BlocoPrinci ([Var], [Comando]) deriving Show
 
 data Tipo = TDouble 
           | TInt 

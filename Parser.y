@@ -64,19 +64,20 @@ import qualified Lex as L -- Todas as func desse modulo devem ser usados com o L
 Inicio         : Expr                                {Expr $1}
                | ExprL                               {ExprL $1}
                | Declaracoes                         {Vars $1}
-               | Bloco                               {Bloco $1}
+              --  | Bloco                               {Bloco $1}
               --  | DeclParams                          {DeclParams $1}
               --  | DeclFuncs                           {Funcs $1}
+               | BlocoPrinc                          {BlocoPrinci $1}
 
-Tipo           : 'int'                               {TInt}
+Tipo           : 'int'                               {TInt}    -- Tipo retorna o dado Tipo
                | 'float'                             {TDouble}
                | 'string'                            {TString}
 
 -- DeclFuncs      : DeclFuncs Func                      {$1 ++ [$2]}
 --                | Func                                {[$1]}
 
--- Func           : TipoRet Id '(' DeclParams ')' BlocoPrinc {($2 :->: ($4, $1), $6)}
---                | TipoRet Id '(' ')' BlocoPrinc            {($2 :->: ([], $1), $5)}
+-- Func           : TipoRet Id '(' DeclParams ')' BlocoPrinc {($2 :->: ($4, $1),($2, fst($6), snd($6)))}
+--                | TipoRet Id '(' ')' BlocoPrinc            {($2 :->: ([], $1)($2, fst($5), snd($5)))}
 
 -- TipoRet        : Tipo                                {$1}
 --                | 'void'                              {DECVOID}
@@ -86,15 +87,15 @@ Tipo           : 'int'                               {TInt}
 
 -- Param          : Tipo IdVar                          {$2 :#: ($1, 0)}
 
--- BlocoPrinc     : '{' Declaracoes ListaCmd '}'        {($1, $2)}
---                | '{' ListaCmd '}'                    {([], $2)}
+BlocoPrinc     : '{' Declaracoes ListaCmd '}'        {($2, $3)} -- BlocoPrincipal retorna uma lista de variáveis e uma lista de comandos, sendo possível representar esse retorno por uma tupla: ([Var], [Cmd])
+               | '{' ListaCmd '}'                    {([], $2)}
 
-Declaracoes    : Declaracoes Declaracao              {$1 ++ $2}
+Declaracoes    : Declaracoes Declaracao              {$1 ++ $2} -- Declaracoes e Declaracao sao [Var], retornando [Var]
                | Declaracao                          {$1}
 
-Declaracao     : Tipo ListaId ';'                    {map(\x -> x:#: ($1, 0)) $2}
+Declaracao     : Tipo ListaId ';'                    {map(\x -> x:#: ($1, 0)) $2} -- Lista de Strings em Lista de Variáveis
 
-ListaId        : ListaId ',' IdVar                   {$1 ++ [$3]} 
+ListaId        : ListaId ',' IdVar                   {$1 ++ [$3]}  -- ListaId Retorna uma lista de strings [String]
 	             | IdVar                               {[$1]} 
 
 ExprL          : ExprL '||' TermL                    {Or $1 $3}
@@ -182,6 +183,7 @@ main = do putStr "Expressão:"
             ExprL v -> print v
             Vars v -> print v
             Bloco v -> print v
+            BlocoPrinci v -> print v
             -- DeclParams v -> print v
             -- Funcs v -> print v
 }
