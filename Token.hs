@@ -36,7 +36,7 @@ data Token
 
   -- Declarações de tipos
   | DECINT
-  | DECFLOAT
+  | DECDOUBLE
   | DECSTRING
   | LIT String
   | DECVOID

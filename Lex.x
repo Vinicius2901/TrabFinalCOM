@@ -42,7 +42,7 @@ tokens :-
 
 -- Declarações de tipos
 <0> "int"        {\s -> DECINT}
-<0> "float"      {\s -> DECFLOAT}
+<0> "double"      {\s -> DECDOUBLE}
 <0> "string"     {\s -> DECSTRING}
 <0> "void"       {\s -> DECVOID}
 

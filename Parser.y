@@ -37,7 +37,7 @@ import qualified Lex as L -- Todas as func desse modulo devem ser usados com o L
 
 -- Declarações
   'int'     {DECINT}
-  'float'   {DECFLOAT}
+  'double'   {DECDOUBLE}
   'string'  {DECSTRING}
   'void'    {DECVOID}
   ';'       {FIMLINHA}
@@ -60,32 +60,32 @@ import qualified Lex as L -- Todas as func desse modulo devem ser usados com o L
   Literal   {LIT $$}
 
 %%
--- TODO: Programa, BlocoPrinc, DecFuncs!!!!
+-- TODO: Programa!!!!
 Inicio         : Expr                                {Expr $1}
-               | ExprL                               {ExprL $1}
-               | Declaracoes                         {Vars $1}
+              --  | ExprL                               {ExprL $1}
+              --  | Declaracoes                         {Vars $1}
               --  | Bloco                               {Bloco $1}
               --  | DeclParams                          {DeclParams $1}
-              --  | DeclFuncs                           {Funcs $1}
-               | BlocoPrinc                          {BlocoPrinci $1}
+               | DeclFuncs                           {Funcs $1}
+              --  | BlocoPrinc                          {BlocoPrinci $1}
 
 Tipo           : 'int'                               {TInt}    -- Tipo retorna o dado Tipo
-               | 'float'                             {TDouble}
+               | 'double'                            {TDouble}
                | 'string'                            {TString}
 
--- DeclFuncs      : DeclFuncs Func                      {$1 ++ [$2]}
---                | Func                                {[$1]}
+DeclFuncs      : DeclFuncs Func                      {$1 ++ [$2]}
+               | Func                                {[$1]}
 
--- Func           : TipoRet Id '(' DeclParams ')' BlocoPrinc {($2 :->: ($4, $1),($2, fst($6), snd($6)))}
---                | TipoRet Id '(' ')' BlocoPrinc            {($2 :->: ([], $1)($2, fst($5), snd($5)))}
+Func           : TipoRet Id '(' DeclParams ')' BlocoPrinc {($2 :->: ($4, $1),($2, fst($6), snd($6)))}
+               | TipoRet Id '(' ')' BlocoPrinc            {($2 :->: ([], $1),($2, fst($5), snd($5)))}
 
--- TipoRet        : Tipo                                {$1}
---                | 'void'                              {DECVOID}
+TipoRet        : Tipo                                {$1}
+               | 'void'                              {TVoid}
 
--- DeclParams     : DeclParams ',' Param                {$1 ++ [$3]}
---                | Param                               {[$1]}
+DeclParams     : DeclParams ',' Param                {$1 ++ [$3]}
+               | Param                               {[$1]}
 
--- Param          : Tipo IdVar                          {$2 :#: ($1, 0)}
+Param          : Tipo IdVar                          {$2 :#: ($1, 0)}
 
 BlocoPrinc     : '{' Declaracoes ListaCmd '}'        {($2, $3)} -- BlocoPrincipal retorna uma lista de variáveis e uma lista de comandos, sendo possível representar esse retorno por uma tupla: ([Var], [Cmd])
                | '{' ListaCmd '}'                    {([], $2)}
@@ -97,35 +97,6 @@ Declaracao     : Tipo ListaId ';'                    {map(\x -> x:#: ($1, 0)) $2
 
 ListaId        : ListaId ',' IdVar                   {$1 ++ [$3]}  -- ListaId Retorna uma lista de strings [String]
 	             | IdVar                               {[$1]} 
-
-ExprL          : ExprL '||' TermL                    {Or $1 $3}
-               | ExprL '&&' TermL                    {And $1 $3}
-               | TermL                               {$1}
-
-TermL          : '!' TermL                           {Not $2}
-               | ExprR                               {Rel $1}
-
-ExprR          : Expr '==' Expr                      {Req $1 $3}
-               | Expr '/=' Expr                      {Rdif $1 $3}
-               | Expr '<=' Expr                      {Rle $1 $3}
-               | Expr '<' Expr                       {Rlt $1 $3}
-               | Expr '>=' Expr                      {Rge $1 $3}
-               | Expr '>' Expr                       {Rgt $1 $3}
-
-
-Expr           : Expr '+' Term                       {Add $1 $3} -- Expr recebe a posição 1 da produção somada à posição 3 da produção (E.val = E1.val + T.val)
-               | Expr '-' Term                       {Sub $1 $3} -- Expr recebe a subtração da posição 1 da produção com a posução 3 da produção(E.val = E1.val - T.val) -> '-' aqui é operador binário
-               | Term                                {$1}        -- Expr recebe a posição 1 da produção(E.val = T.val)
-
-Term           : Term  '*' Factor                    {Mul $1 $3}
-               | Term '/' Factor                     {Div $1 $3}
-               | Factor                              {$1}
-
-Factor         : TConst                             {Const $1}
-               | '(' Expr ')'                       {$2}
-               | '-' Factor	                        {Neg $2} -- '-' como operador unário (tem maior precedência)
-               | IdVar                              {IdVar $1}
-               | Lit                                {Lit $1}
 
 Lit            : Literal                            {$1}
 
@@ -164,11 +135,45 @@ CmdLeitura     : 'read' '(' IdVar ')' ';'              {Leitura $3}
 
 ChamadaProc    : ChamaFunc ';'                         {$1}
 
-ChamaFunc      : Id '(' ListaParam ')'              {Proc $1 $3}
-               | Id '(' ')'                         {Proc $1 []}
+ChamaFunc      : Id '(' ListaParam ')'                 {Proc $1 $3}
+               | Id '(' ')'                            {Proc $1 []}
 
 ListaParam     : ListaParam ',' Expr                   {$1 ++ [$3]}
                | Expr                                  {[$1]}
+
+
+ExprL          : ExprL '||' TermL                    {Or $1 $3}
+               | ExprL '&&' TermL                    {And $1 $3}
+               | TermL                               {$1}
+
+TermL          : '!' TermL                           {Not $2}
+               | ExprR                               {Rel $1}
+
+ExprR          : Expr '==' Expr                      {Req $1 $3}
+               | Expr '/=' Expr                      {Rdif $1 $3}
+               | Expr '<=' Expr                      {Rle $1 $3}
+               | Expr '<' Expr                       {Rlt $1 $3}
+               | Expr '>=' Expr                      {Rge $1 $3}
+               | Expr '>' Expr                       {Rgt $1 $3}
+
+
+Expr           : Expr '+' Term                       {Add $1 $3} -- Expr recebe a posição 1 da produção somada à posição 3 da produção (E.val = E1.val + T.val)
+               | Expr '-' Term                       {Sub $1 $3} -- Expr recebe a subtração da posição 1 da produção com a posução 3 da produção(E.val = E1.val - T.val) -> '-' aqui é operador binário
+               | Term                                {$1}        -- Expr recebe a posição 1 da produção(E.val = T.val)
+
+Term           : Term  '*' Factor                    {Mul $1 $3}
+               | Term '/' Factor                     {Div $1 $3}
+               | Factor                              {$1}
+
+Factor         : TConst                             {Const $1}
+               | '(' Expr ')'                       {$2}
+               | '-' Factor	                        {Neg $2} -- '-' como operador unário (tem maior precedência)
+               | IdVar                              {IdVar $1}
+               | Lit                                {Lit $1}
+               | Id '(' ListaParam ')'              {Chamada $1 $3}
+               | Id '(' ')'                         {Chamada $1 []}
+               | '(' 'int' ')' Factor               {DoubleInt $4}
+               | '(' 'double' ')' Factor            {IntDouble $4}
 
 
 
@@ -181,9 +186,9 @@ main = do putStr "Expressão:"
           case calc(L.alexScanTokens s) of
             Expr v -> print v
             ExprL v -> print v
-            Vars v -> print v
-            Bloco v -> print v
-            BlocoPrinci v -> print v
+            -- Vars v -> print v
+            -- Bloco v -> print v
+            -- BlocoPrinci v -> print v
             -- DeclParams v -> print v
-            -- Funcs v -> print v
+            Funcs v -> print v
 }
