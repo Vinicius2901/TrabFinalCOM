@@ -63,7 +63,7 @@ import qualified Lex as L -- Todas as func desse modulo devem ser usados com o L
 -- TODO: Programa, BlocoPrinc, DecFuncs!!!!
 Inicio         : Expr                                {Expr $1}
                | ExprL                               {ExprL $1}
-              --  | Declaracoes                         {Vars $1}
+               | Declaracoes                         {Vars $1}
                | Bloco                               {Bloco $1}
               --  | DeclParams                          {DeclParams $1}
               --  | DeclFuncs                           {Funcs $1}
