@@ -61,12 +61,15 @@ import qualified Lex as L -- Todas as func desse modulo devem ser usados com o L
 
 %%
 -- TODO: Programa!!!!
-Inicio         : Expr                                {Expr $1}
-              --  | ExprL                               {ExprL $1}
-              --  | Declaracoes                         {Vars $1}
-              --  | Bloco                               {Bloco $1}
-              --  | DeclParams                          {DeclParams $1}
-               | DeclFuncs                           {Funcs $1}
+-- Inicio         : Expr                                {Expr $1}
+-- --               --  | ExprL                               {ExprL $1}
+-- --               --  | Declaracoes                         {Vars $1}
+-- --               --  | Bloco                               {Bloco $1}
+-- --               --  | DeclParams                          {DeclParams $1}
+--                | DeclFuncs                           {Funcs $1}
+
+Programa       : DeclFuncs BlocoPrinc                {Prog (fst (unzip $1)) (snd( unzip $1)) (fst $2) (snd $2)}
+               | BlocoPrinc                          {Prog [] [] (fst $1) (snd $1)}
 
 Tipo           : 'int'                               {TInt}    -- Tipo retorna o dado Tipo
                | 'double'                            {TDouble}
@@ -182,16 +185,17 @@ parseError s = error ("Parse error:" ++ show s)
 
 main = do putStr "Expressão:"
           s <- getLine
-          case calc(L.alexScanTokens s) of
-            Expr v -> print v
-            ExprL v -> print v
-            -- Vars v -> print v
-            -- Bloco v -> print v
-            -- BlocoPrinci v -> print v
-            -- Vars v -> print v
-            -- Bloco v -> print v
-            -- BlocoPrinci v -> print v
-            -- DeclParams v -> print v
-            Funcs v -> print v
-            Funcs v -> print v
+          -- case calc(L.alexScanTokens s) of
+          --   Expr v -> print v
+          --   ExprL v -> print v
+          --   -- Vars v -> print v
+          --   -- Bloco v -> print v
+          --   -- BlocoPrinci v -> print v
+          --   -- Vars v -> print v
+          --   -- Bloco v -> print v
+          --   -- BlocoPrinci v -> print v
+          --   -- DeclParams v -> print v
+            -- Funcs v -> print v
+          --   Funcs v -> print v
+          print (calc (L.alexScanTokens s))
 }
