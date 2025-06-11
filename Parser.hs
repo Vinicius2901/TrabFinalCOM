@@ -1606,8 +1606,8 @@ happySeq = happyDontSeq
 parseError :: [Token] -> a
 parseError s = error ("Parse error:" ++ show s)
 
-main = do putStr "Expressão:"
-          s <- getLine
+
+main = do s <- readFile "Teste.txt"
           print (calc (L.alexScanTokens s))
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 -- $Id: GenericTemplate.hs,v 1.26 2005/01/14 14:47:22 simonmar Exp $
