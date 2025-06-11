@@ -60,13 +60,6 @@ import qualified Lex as L -- Todas as func desse modulo devem ser usados com o L
   Literal   {LIT $$}
 
 %%
--- TODO: Programa!!!!
--- Inicio         : Expr                                {Expr $1}
--- --               --  | ExprL                               {ExprL $1}
--- --               --  | Declaracoes                         {Vars $1}
--- --               --  | Bloco                               {Bloco $1}
--- --               --  | DeclParams                          {DeclParams $1}
---                | DeclFuncs                           {Funcs $1}
 
 Programa       : DeclFuncs BlocoPrinc                {Prog (fst (unzip $1)) (snd( unzip $1)) (fst $2) (snd $2)}
                | BlocoPrinc                          {Prog [] [] (fst $1) (snd $1)}
@@ -121,7 +114,7 @@ Cmd            : CmdSe                              {$1}
                | ChamadaProc                        {$1}
                | Retorno                            {$1}
 
-Retorno        : 'return' Expr ';'                  {Ret (Just $2)}
+Retorno        : 'return' Expr ';'                  {Ret (Just $2)} -- Maybe a = Just a | Nothing
                | 'return' ';'                       {Ret Nothing}
 
 CmdSe          : 'if' '(' ExprL ')' Bloco              {If $3 $5 []}
@@ -185,17 +178,5 @@ parseError s = error ("Parse error:" ++ show s)
 
 main = do putStr "Expressão:"
           s <- getLine
-          -- case calc(L.alexScanTokens s) of
-          --   Expr v -> print v
-          --   ExprL v -> print v
-          --   -- Vars v -> print v
-          --   -- Bloco v -> print v
-          --   -- BlocoPrinci v -> print v
-          --   -- Vars v -> print v
-          --   -- Bloco v -> print v
-          --   -- BlocoPrinci v -> print v
-          --   -- DeclParams v -> print v
-            -- Funcs v -> print v
-          --   Funcs v -> print v
           print (calc (L.alexScanTokens s))
 }

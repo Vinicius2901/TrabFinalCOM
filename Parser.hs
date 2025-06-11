@@ -1608,18 +1608,6 @@ parseError s = error ("Parse error:" ++ show s)
 
 main = do putStr "Expressão:"
           s <- getLine
-          -- case calc(L.alexScanTokens s) of
-          --   Expr v -> print v
-          --   ExprL v -> print v
-          --   -- Vars v -> print v
-          --   -- Bloco v -> print v
-          --   -- BlocoPrinci v -> print v
-          --   -- Vars v -> print v
-          --   -- Bloco v -> print v
-          --   -- BlocoPrinci v -> print v
-          --   -- DeclParams v -> print v
-            -- Funcs v -> print v
-          --   Funcs v -> print v
           print (calc (L.alexScanTokens s))
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 -- $Id: GenericTemplate.hs,v 1.26 2005/01/14 14:47:22 simonmar Exp $
