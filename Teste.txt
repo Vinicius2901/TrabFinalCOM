@@ -1,13 +1,13 @@
-int fib ( int n ) {
+int fat ( int n ) {
     if( n == 0 ) {
         return 1; 
     } else {
-        return n * fib (n-1); 
+        return n * fat (n-1); 
     } 
 } 
 
 { 
     int a, b, c;
     a = 3;
-    fib(a);
+    fat(a);
 }
