@@ -970,7 +970,7 @@ happyReduction_8 ((HappyAbsSyn11  happy_var_6) `HappyStk`
 	(HappyAbsSyn8  happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn7
-		 ((happy_var_2 :->: (happy_var_4, happy_var_1),(happy_var_2, fst(happy_var_6), snd(happy_var_6)))
+		 ((happy_var_2 :->: (happy_var_4, happy_var_1),(happy_var_2, happy_var_4 ++ fst(happy_var_6), snd(happy_var_6)))
 	) `HappyStk` happyRest
 
 happyReduce_9 = happyReduce 5 7 happyReduction_9

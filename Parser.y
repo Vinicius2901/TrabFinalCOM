@@ -71,7 +71,7 @@ Tipo           : 'int'                               {TInt}    -- Tipo retorna o
 DeclFuncs      : DeclFuncs Func                      {$1 ++ [$2]}
                | Func                                {[$1]}
 
-Func           : TipoRet Id '(' DeclParams ')' BlocoPrinc {($2 :->: ($4, $1),($2, fst($6), snd($6)))}
+Func           : TipoRet Id '(' DeclParams ')' BlocoPrinc {($2 :->: ($4, $1),($2, $4 ++ fst($6), snd($6)))}
                | TipoRet Id '(' ')' BlocoPrinc            {($2 :->: ([], $1),($2, fst($5), snd($5)))}
 
 TipoRet        : Tipo                                {$1}
