@@ -176,7 +176,10 @@ Factor         : TConst                             {Const $1}
 parseError :: [Token] -> a
 parseError s = error ("Parse error:" ++ show s)
 
-
 main = do s <- readFile "Teste.txt"
           print (calc (L.alexScanTokens s))
+
+manual = do putStr "Expressão: "
+            s <- getLine
+            print(calc (L.alexScanTokens s))
 }
