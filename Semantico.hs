@@ -20,3 +20,14 @@ instance Monad Result where
 errorMsg s = Result (True, "Erro:"++s++"\n", ())
 
 warningMsg s = Result (False, "Advertencia:"++s++"\n", ())
+
+coercao op e1 e2 t1 t2 | t1 == t2                    = return (t1, op e1 e2)
+                       | t1 == TInt && t2 == TDouble = return (t2, op (IntDouble e1) e2)
+                       | t1 == TDouble && t2 == TInt = return (t1, op e1 (IntDouble e2))
+                       | otherwise = do errorMsg $ "Erro de tipos na expressao: " ++ show (op e1 e2) ++ ", " ++
+                                                   show e1 ++ " eh do tipo " ++ show t1 ++ " e " ++ show e2 ++
+                                                   " eh do tipo " ++ show t2 ++" \n"
+                                        return (t1, op e1 e2)
+
+tExpr tfun tab (Const (CInt _)) = return (c, TInt)
+tExpr tfun tab (Add e1 e2) = do {(t1, e1') <- tExpr tfun tab e1; (t2, e2') <- tExpr tfun tab e2; coercao Add e1' e2' t1 t2}
