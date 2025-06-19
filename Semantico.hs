@@ -1,4 +1,4 @@
-module Semanctico where
+module Semantico where
 
 import System.IO
 import RI -- import do arquivo .hs para representação intermediária
