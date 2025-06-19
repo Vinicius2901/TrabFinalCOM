@@ -29,5 +29,7 @@ coercao op e1 e2 t1 t2 | t1 == t2                    = return (t1, op e1 e2)
                                                    " eh do tipo " ++ show t2 ++" \n"
                                         return (t1, op e1 e2)
 
-tExpr tfun tab (Const (CInt _)) = return (c, TInt)
+tExpr tfun tab (Const (CInt n)) = return (TInt, Const(CInt n))
+tExpr tfun tab (Const (CDouble n)) = return (TDouble, Const(CDouble n))
+tExpr tfun tab (Lit s) = return (TString, Lit s)
 tExpr tfun tab (Add e1 e2) = do {(t1, e1') <- tExpr tfun tab e1; (t2, e2') <- tExpr tfun tab e2; coercao Add e1' e2' t1 t2}
