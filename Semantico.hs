@@ -30,8 +30,16 @@ coercao op e1 e2 t1 t2 | t1 == t2                    = return (t1, op e1 e2)
                                         return (t1, op e1 e2)
 
 
-coercaoDiv op e1 e2@(Const(CInt 0)) t1 t2 = do errorMsg $ "Erro do divisor ser 0 na expressao: " ++ show (op e1 e2) ++ ", " ++ show (e2) ++ "eh 0" ++ " \n"
-                                               return (t1, op e1 e2)
+coercaoDiv :: (Expr -> Expr -> Expr) -> Expr -> Expr -> Tipo -> Tipo -> Result (Tipo, Expr)
+coercaoDiv op e1 e2 t1 t2 =
+    case e2 of
+        Const (CInt 0)    -> do
+            errorMsg $ "Erro: divisor eh 0 na expressao: " ++ show (op e1 e2)
+            return (t1, op e1 e2)
+        Const (CDouble 0) -> do
+            errorMsg $ "Erro: divisor eh 0.0 na expressao: " ++ show (op e1 e2)
+            return (t1, op e1 e2)
+        _ -> coercao op e1 e2 t1 t2
 
 tExpr tfun tab (Const (CInt n)) = return (TInt, Const(CInt n))
 tExpr tfun tab (Const (CDouble n)) = return (TDouble, Const(CDouble n))
