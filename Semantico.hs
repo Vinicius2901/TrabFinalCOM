@@ -18,10 +18,9 @@ instance Monad Result where
   Result (b, s, a) >>= f = let Result (b', s', a') = f a in Result (b || b', s++s', a')
   
 
-consulta [] v = errorMsg "Não achou"  
-consulta (i:#:(t,_):xs) v = 
-    if v==i then return t
-    else consulta xs v
+consulta [] v = do {errorMsg $ "Nao achou a variavel " ++ v; return TVoid}  
+consulta tab@(i:#:(t,_):xs) v = if v==i then return t
+                                else consulta xs v
 
 
 errorMsg s = Result (True, "Erro:"++s++"\n", ())
@@ -50,6 +49,7 @@ coercaoDiv op e1 e2 t1 t2 =
 
 tExpr tfun tab (Const (CInt n)) = return (TInt, Const(CInt n))
 tExpr tfun tab (Const (CDouble n)) = return (TDouble, Const(CDouble n))
+tExpr tfun tab (IdVar x) = do {t <- consulta tab x; return (t, IdVar x)}
 tExpr tfun tab (Lit s) = return (TString, Lit s)
 tExpr tfun tab (Add e1 e2) = do {(t1, e1') <- tExpr tfun tab e1;
                                  (t2, e2') <- tExpr tfun tab e2;
