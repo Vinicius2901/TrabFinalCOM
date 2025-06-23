@@ -17,6 +17,13 @@ instance Monad Result where
 --  return a = Result (False, "", a)
   Result (b, s, a) >>= f = let Result (b', s', a') = f a in Result (b || b', s++s', a')
   
+
+consulta [] v = errorMsg "Não achou"  
+consulta (i:#:(t,_):xs) v = 
+    if v==i then return t
+    else consulta xs v
+
+
 errorMsg s = Result (True, "Erro:"++s++"\n", ())
 
 warningMsg s = Result (False, "Advertencia:"++s++"\n", ())
