@@ -15,7 +15,9 @@ data Tipo = TDouble
           | TVoid deriving (Show, Eq)
 
 data TCons = CDouble Double 
-           | CInt Int deriving Show
+           | CInt Int 
+           | CString String
+           deriving Show
 
 data Expr = Add Expr Expr 
           | Sub Expr Expr 

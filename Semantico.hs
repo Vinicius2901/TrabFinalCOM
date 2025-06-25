@@ -49,6 +49,8 @@ coercaoDiv op e1 e2 t1 t2 =
 
 tExpr tfun tab (Const (CInt n)) = return (TInt, Const(CInt n))
 tExpr tfun tab (Const (CDouble n)) = return (TDouble, Const(CDouble n))
+tExpr tfun tab (Const (CString s)) = return (TString, Const(CString s))
+
 tExpr tfun tab (IdVar x) = do {t <- consulta tab x; return (t, IdVar x)}
 tExpr tfun tab (Lit s) = return (TString, Lit s)
 tExpr tfun tab (Add e1 e2) = do {(t1, e1') <- tExpr tfun tab e1;
