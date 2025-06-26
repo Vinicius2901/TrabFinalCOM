@@ -70,6 +70,14 @@ tCommand tfun tab command@(While exprl b) = do ex <- auxExprL tfun tab exprl
                                                b' <- percorreBloco b tfun tab
                                                pure(While exprl b)
 
+tCommand tfun tab command@(Proc id ls) = do func@(id':->:(vars, tret)) <- consultaFunc tfun id
+                                            if (id /= id') then return command
+                                            else 
+                                              if (contaParam ls /= contaParam (vars)) 
+                                                then do errorMsg $ "Contagem de parametros nao bate com a declaracao " ++ show command
+                                                        return command
+                                              else return command
+
 percorreBloco [] tfun tab = pure []
 percorreBloco (x:xs) tfun tab = do tCommand tfun tab x
                                    percorreBloco xs tfun tab
@@ -84,9 +92,9 @@ consulta tab@(i:#:(t,_):xs) v = if v==i then return t
 
 --Id :->: ([Var], Tipo) 
 -- consultaFunc ["foo":->:([], TVoid)] "foo"
-consultaFunc :: [Funcao] -> Id -> Result Tipo
-consultaFunc [] f = do {errorMsg $ "Nao achou a funcao " ++ show f; return TVoid}
-consultaFunc (id:->:(vs,t):xs) f = if f==id then return t
+consultaFunc :: [Funcao] -> Id -> Result Funcao
+consultaFunc [] f = do {errorMsg $ "Nao achou a funcao " ++ show f; return ((f++"\'"):->:([],TVoid))}
+consultaFunc (id:->:(vs,t):xs) f = if f==id then return (id:->:(vs,t))
                                        else consultaFunc xs f
 contaFun [] f = 0
 contaFun (id:->:(vs,t):xs) f = if f == id then contaFun xs f + 1
@@ -107,7 +115,7 @@ auxVar ls@(id:#:(t,_):xs) mf_id = if((contaVar ls id) > 1) then
                          else auxVar xs mf_id
 
 -- teste contaParam ["a" :#: (TInt, 0), "b":#:(TInt, 0)]
--- teste2 contaPram [IdVar "a", IdVar "b"]
+-- teste2 contaParam [IdVar "a", IdVar "b"]
 -- Retorna a quantidade de termos na lista. No nosso caso, irá contar quantos parâmetros têm na declaração e quantos parâmetros têm na chamada
 contaParam [] = 0
 contaParam (x:xs) = 1 + contaParam xs
