@@ -92,8 +92,23 @@ auxProc tfun tab (var@(id:#:(t, _)):xs) (y:ys) command@(Proc id1 ls) = do (t1, e
                                                                           else do auxProc tfun tab xs ys command 
                                                                                   return command
                                                     
+
+auxCham tfun tab [] [] chamada@(Chamada id ls) = return chamada
+auxCham tfun tab (var@(id:#:(t, _)):xs) (y:ys) chamada@(Chamada id1 ls) = do (t1, e1) <- tExpr tfun tab y
+                                                                             if t1 == TString && t /= TString || t1 /= TString && t == TString 
+                                                                               then do errorMsg $ "Tipos incompativeis na chamada da funcao " ++ id1 ++ "\nEspera-se: " ++ show t ++ "\nEnviou-se: " ++ show t1
+                                                                                       auxCham tfun tab xs ys chamada
+                                                                                       return chamada
+                                                                             else if t == TInt && t1 == TDouble 
+                                                                               then do warningMsg $ "Fornecido double para a funcao " ++ id1 ++  " com parametro int " ++ show var
+                                                                                       auxCham tfun tab xs ys chamada
+                                                                                       return chamada
+                                                                             else do auxCham tfun tab xs ys chamada 
+                                                                                     return chamada
+                                                    
                                                       
-                                                              
+                                                                                                                    
+
                                                       
                                             
 
@@ -204,6 +219,15 @@ tExpr tfun tab (Div e1 e2) = do {(t1, e1') <- tExpr tfun tab e1;
                                  (t2, e2') <- tExpr tfun tab e2;
                                  coercaoDiv Div e1' e2' t1 t2}
 
+tExpr tfun tab (Chamada id ls) = do func@(id':->:(vars, tret)) <- consultaFunc tfun id
+                                    if (id /= id') then return (tret, (Chamada id ls))
+                                    else 
+                                      if (contaParam ls /= contaParam (vars)) 
+                                        then do errorMsg $ "Contagem de parametros nao bate com a declaracao " ++ show (tret, (Chamada id ls))
+                                                return (tret, (Chamada id ls))
+                                      else do a <- auxCham tfun tab vars ls (Chamada id ls)
+                                              return (tret, a)
+
 auxExprR :: [Funcao] -> [Var] -> ExprR -> Result ExprR
 auxExprR tfun tab op@(Req e1 e2) = tExprR tfun tab Req e1 e2
 auxExprR tfun tab op@(Rdif e1 e2) = tExprR tfun tab Rdif e1 e2
@@ -247,6 +271,3 @@ tExprL tfun tab op e1 e2 = do
   e1' <- auxExprL tfun tab e1
   e2' <- auxExprL tfun tab e2
   pure(op e1' e2')
-
-
-
