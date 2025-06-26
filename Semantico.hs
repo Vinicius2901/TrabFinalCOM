@@ -27,7 +27,7 @@ consultaVar [] _ = Nothing
 consultaVar (i:#:(t,_):xs) v = if v == i then (Just t)
                                else consultaVar xs v  
 
-tCommand tfun tab command@(Atrib id expr) = do
+tCommand tfun tab command@(Atrib id expr) _ = do
   let t1 = case consultaVar tab id of
                 Just t -> t
                 Nothing -> TVoid
@@ -47,7 +47,7 @@ tCommand tfun tab command@(Atrib id expr) = do
         errorMsg("Impossivel atribuir " ++ show t2 ++ " em " ++ show t1)
         return (Atrib id expr)
  
-tCommand tfun tab command@(Leitura id) = do
+tCommand tfun tab command@(Leitura id) _ = do
   let t1 = case consultaVar tab id of
                 Just t -> t
                 Nothing -> TVoid
@@ -58,26 +58,56 @@ tCommand tfun tab command@(Leitura id) = do
   else 
     return command
 
-tCommand tfun tab command@(Imp expr) = do (t, e') <- tExpr tfun tab expr
-                                          return (Imp e')                                 
+tCommand tfun tab command@(Imp expr) _ = do 
+  (t, e') <- tExpr tfun tab expr
+  return (Imp e')                                 
 
-tCommand tfun tab command@(If exprl b1 b2) = do ex <- auxExprL tfun tab exprl
-                                                b1' <- percorreBloco b1 tfun tab
-                                                b2' <- percorreBloco b2 tfun tab
-                                                pure(If ex b1' b2')
+tCommand tfun tab command@(If exprl b1 b2) f = do 
+  ex <- auxExprL tfun tab exprl
+  b1' <- percorreBloco b1 tfun tab f
+  b2' <- percorreBloco b2 tfun tab f
+  pure(If ex b1' b2')
 
-tCommand tfun tab command@(While exprl b) = do ex <- auxExprL tfun tab exprl
-                                               b' <- percorreBloco b tfun tab
-                                               pure(While exprl b)
+tCommand tfun tab command@(While exprl b) f = do 
+  ex <- auxExprL tfun tab exprl
+  b' <- percorreBloco b tfun tab f
+  pure(While exprl b)
 
-tCommand tfun tab command@(Proc id ls) = do func@(id':->:(vars, tret)) <- consultaFunc tfun id
-                                            if (id /= id') then return command
-                                            else 
-                                              if (contaParam ls /= contaParam (vars)) 
-                                                then do errorMsg $ "Contagem de parametros nao bate com a declaracao " ++ show command
-                                                        return command
-                                              else auxProc tfun tab vars ls command
+tCommand tfun tab command@(Proc id ls) _ = do 
+  func@(id':->:(vars, tret)) <- consultaFunc tfun id
+  if (id /= id') then return command
+  else 
+    if (contaParam ls /= contaParam (vars)) 
+      then do errorMsg $ "Contagem de parametros nao bate com a declaracao " ++ show command
+              return command
+    else auxProc tfun tab vars ls command
 
+-- id :->: ([Var], Tipo)
+tCommand tfun tab command@(Ret maybe) f@(id:->:(ls,tret)) = do
+  case maybe of
+    Just expr -> do
+      (t',e') <- tExpr tfun tab expr
+
+      if(t' == tret) then do
+        return command
+      else if (tret == TString && t' /= TString || tret /= TString && t' == TString) then do
+        errorMsg $ "Tipo de retorno incompativel em " ++ show f ++ "\nEsperado: " ++ show tret ++ "\nRecebido: " ++ show t'
+        return command
+      else if(tret == TInt && t' == TDouble) then do
+        warningMsg $ "Tipo de retorno recebido double em funcao que retorna int"
+        return command
+      else if(tret == TDouble && t'==TInt) then
+        return command
+      else do
+        errorMsg $ "Tipo de retorno da funcao eh void, mas foi retornado " ++ show t'
+        return command
+    Nothing -> do
+      if(tret == TVoid) then
+        return command
+      else do
+        errorMsg $ "Funcao espera retorno de tipo " ++ show tret ++ ", mas nao foi retornado."
+        return command
+    
 
 auxProc tfun tab [] [] command@(Proc id ls) = return command
 auxProc tfun tab (var@(id:#:(t, _)):xs) (y:ys) command@(Proc id1 ls) = do (t1, e1) <- tExpr tfun tab y
@@ -113,10 +143,11 @@ auxCham tfun tab (var@(id:#:(t, _)):xs) (y:ys) chamada@(Chamada id1 ls) = do (t1
                                             
 
 
-percorreBloco [] tfun tab = pure []
-percorreBloco (x:xs) tfun tab = do tCommand tfun tab x
-                                   percorreBloco xs tfun tab
-                                   pure[x]
+percorreBloco [] tfun tab f = pure []
+percorreBloco (x:xs) tfun tab f = do 
+  tCommand tfun tab x f
+  percorreBloco xs tfun tab f
+  pure[x]
 
 
 
