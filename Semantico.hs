@@ -18,17 +18,27 @@ instance Monad Result where
   Result (b, s, a) >>= f = let Result (b', s', a') = f a in Result (b || b', s++s', a')
   
 
+naLista _ [] = return False
+naLista e (x:xs) = if(e==x) then return True
+                   else naLista e xs
+
+consulta :: [Var] -> [Char] -> Result Tipo
 consulta [] v = do {errorMsg $ "Nao achou a variavel " ++ v; return TVoid}  
 consulta tab@(i:#:(t,_):xs) v = if v==i then return t
                                 else consulta xs v
---Id :->: ([Var], Tipo) 
 
+--Id :->: ([Var], Tipo) 
 -- consultaFunc ["foo":->:([], TVoid)] "foo"
+consultaFunc :: [Funcao] -> Id -> Result Tipo
 consultaFunc [] f = do {errorMsg $ "Nao achou a funcao " ++ show f; return TVoid}
 consultaFunc (id:->:(vs,t):xs) f = if f==id then return t
                                        else consultaFunc xs f
-
-
+contaFun [] f = 0
+contaFun (id:->:(vs,t):xs) f = if f == id then contaFun xs f + 1
+                               else contaFun xs f
+auxFun [] = Result(False, "", ())
+auxFun ls@((id:->:(vs,t)):xs) = if ((contaFun ls id) > 1) then do {errorMsg $ "Funcao multiplamente declarada: " ++ show id; auxFun xs}
+                                else auxFun xs 
 
 errorMsg s = Result (True, "Erro:"++s++"\n", ())
 
@@ -139,6 +149,4 @@ tExprL tfun tab op e1 e2 = do
   pure(op e1' e2')
 
 
-naLista _ [] = return False
-naLista e (x:xs) = if(e==x) then return True
-                   else naLista e xs
+
