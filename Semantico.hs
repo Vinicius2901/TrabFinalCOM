@@ -37,8 +37,8 @@ contaFun [] f = 0
 contaFun (id:->:(vs,t):xs) f = if f == id then contaFun xs f + 1
                                else contaFun xs f
 auxFun [] = Result(False, "", ())
-auxFun ls@((id:->:(vs,t)):xs) = if ((contaFun ls id) > 1) then do {errorMsg $ "Funcao multiplamente declarada: " ++ show id; auxFun xs}
-                                else auxFun xs 
+auxFun ls@((id:->:(vs,t)):xs) = if ((contaFun ls id) > 1) then do {errorMsg $ "Funcao multiplamente declarada: " ++ show id; auxVar vs; auxFun xs}
+                                else do {auxVar vs; errorMsg $ " na funcao " ++ show id; auxFun xs} 
 
 contaVar [] v = 0
 contaVar (id:#:(t,_):xs) v = if v == id then contaVar xs v + 1
