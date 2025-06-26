@@ -58,6 +58,9 @@ tCommand tfun tab command@(Leitura id) = do
   else 
     return command
 
+tCommand tfun tab command@(Imp expr) = do (t, e') <- tExpr tfun tab expr
+                                          return (Imp e')                                 
+
 consulta :: [Var] -> [Char] -> Result Tipo
 consulta [] v = do {errorMsg $ "Nao achou a variavel " ++ v; return TVoid}  
 consulta tab@(i:#:(t,_):xs) v = if v==i then return t
