@@ -62,6 +62,15 @@ tExpr tfun tab (IntDouble e1) = do
             errorMsg("Tipo inválido para conversão " ++ show t) 
             return(t, e')
 
+tExpr tfun tab(DoubleInt e1) = do
+   (t, e') <- tExpr tfun tab e1
+   if t == TDouble then pure (TInt, DoubleInt e')
+   else if t == TInt then do
+    pure (t, e')
+    else do
+      errorMsg("Tipo inválido para conversão " ++ show t)
+      return(t, e')
+
 
 tExpr tfun tab (IdVar x) = do {t <- consulta tab x; return (t, IdVar x)}
 tExpr tfun tab (Lit s) = return (TString, Lit s)
