@@ -76,7 +76,27 @@ tCommand tfun tab command@(Proc id ls) = do func@(id':->:(vars, tret)) <- consul
                                               if (contaParam ls /= contaParam (vars)) 
                                                 then do errorMsg $ "Contagem de parametros nao bate com a declaracao " ++ show command
                                                         return command
-                                              else return command
+                                              else auxProc tfun tab vars ls command
+
+
+auxProc tfun tab [] [] command@(Proc id ls) = return command
+auxProc tfun tab (var@(id:#:(t, _)):xs) (y:ys) command@(Proc id1 ls) = do (t1, e1) <- tExpr tfun tab y
+                                                                          if t1 == TString && t /= TString || t1 /= TString && t == TString 
+                                                                            then do errorMsg $ "Tipos incompativeis na chamada da funcao " ++ id1 ++ "\nEspera-se: " ++ show t ++ "\nEnviou-se: " ++ show t1
+                                                                                    auxProc tfun tab xs ys command
+                                                                                    return command
+                                                                          else if t == TInt && t1 == TDouble 
+                                                                            then do warningMsg $ "Fornecido double para a funcao " ++ id1 ++  " com parametro int " ++ show var
+                                                                                    auxProc tfun tab xs ys command
+                                                                                    return command
+                                                                          else do auxProc tfun tab xs ys command 
+                                                                                  return command
+                                                    
+                                                      
+                                                              
+                                                      
+                                            
+
 
 percorreBloco [] tfun tab = pure []
 percorreBloco (x:xs) tfun tab = do tCommand tfun tab x
