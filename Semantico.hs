@@ -50,6 +50,13 @@ auxVar ls@(id:#:(t,_):xs) mf_id = if((contaVar ls id) > 1) then
     (Just f_id) -> do {errorMsg $ "Variavel multiplamente declarada: " ++ show id; auxVar xs (Just f_id)} 
     (Nothing) -> do {errorMsg $ "Variavel multiplamente declarada: " ++ show id; auxVar xs Nothing}
                          else auxVar xs mf_id
+
+-- teste contaParam ["a" :#: (TInt, 0), "b":#:(TInt, 0)]
+-- teste2 contaPram [IdVar "a", IdVar "b"]
+-- Retorna a quantidade de termos na lista. No nosso caso, irá contar quantos parâmetros têm na declaração e quantos parâmetros têm na chamada
+contaParam [] = 0
+contaParam (x:xs) = 1 + contaParam xs
+
 errorMsg s = Result (True, "Erro:"++s++"\n", ())
 
 warningMsg s = Result (False, "Advertencia:"++s++"\n", ())
