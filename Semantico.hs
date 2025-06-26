@@ -87,4 +87,25 @@ tExpr tfun tab (Mul e1 e2) = do {(t1, e1') <- tExpr tfun tab e1;
 tExpr tfun tab (Div e1 e2) = do {(t1, e1') <- tExpr tfun tab e1;
                                  (t2, e2') <- tExpr tfun tab e2;
                                  coercaoDiv Div e1' e2' t1 t2}
-          
+
+-- Req, Rdif, Rle, Rlt... são como funções que recebem dois parâmetros
+-- exemplo de insert: tExprR [] [] Req (Const (CInt 0)) (Const (CDouble 3.0))
+tExprR :: [Funcao] -> [Var] -> (Expr -> Expr -> ExprR) -> Expr -> Expr -> Result ExprR
+tExprR tfun tab op e1 e2 = do
+  (t1, e1') <- tExpr tfun tab e1
+  (t2, e2') <- tExpr tfun tab e2
+  if t1 == TString && t2 /= TString || t1 /= TString && t2 == TString
+    then do
+      errorMsg("Variaveis de tipos diferentes (as duas devem ser TString), expressões informadas: " ++ show e1 ++ " e " ++ show e2)
+      return (op e1' e2')
+    else if t1 == t2
+      then pure (op e1' e2')
+      else if t1 == TInt && t2 == TDouble then do
+        warningMsg("Conversão implicita IntDouble na primeira expressao " ++ show e1)
+        return (op (IntDouble e1') e2')
+      else if t1 == TDouble && t2 == TInt then do
+        warningMsg("Conversão implicita IntDouble na segunda expressao " ++ show e2)
+        return (op e1' (IntDouble e2'))
+      else do
+        errorMsg("Expressões incompatíveis " ++ show e1' ++ " com " ++ show e2')
+        return(op e1' e2)
