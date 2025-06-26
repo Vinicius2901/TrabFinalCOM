@@ -61,6 +61,22 @@ tCommand tfun tab command@(Leitura id) = do
 tCommand tfun tab command@(Imp expr) = do (t, e') <- tExpr tfun tab expr
                                           return (Imp e')                                 
 
+tCommand tfun tab command@(If exprl b1 b2) = do ex <- auxExprL tfun tab exprl
+                                                b1' <- percorreBloco b1 tfun tab
+                                                b2' <- percorreBloco b2 tfun tab
+                                                pure(If ex b1' b2')
+
+tCommand tfun tab command@(While exprl b) = do ex <- auxExprL tfun tab exprl
+                                               b' <- percorreBloco b tfun tab
+                                               pure(While exprl b)
+
+percorreBloco [] tfun tab = pure []
+percorreBloco (x:xs) tfun tab = do tCommand tfun tab x
+                                   percorreBloco xs tfun tab
+                                   pure[x]
+
+
+
 consulta :: [Var] -> [Char] -> Result Tipo
 consulta [] v = do {errorMsg $ "Nao achou a variavel " ++ v; return TVoid}  
 consulta tab@(i:#:(t,_):xs) v = if v==i then return t
@@ -177,7 +193,7 @@ tExprR tfun tab op e1 e2 = do
   (t2, e2') <- tExpr tfun tab e2
   if t1 == TString && t2 /= TString || t1 /= TString && t2 == TString
     then do
-      errorMsg("Variaveis de tipos diferentes (as duas devem ser TString), expressões informadas: " ++ show e1 ++ " e " ++ show e2)
+      errorMsg("Variaveis de tipos diferentes (as duas devem ser TString), expressoes informadas: " ++ show e1 ++ " e " ++ show e2)
       return (op e1' e2')
     else if t1 == t2
       then pure (op e1' e2')
