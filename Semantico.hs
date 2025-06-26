@@ -73,8 +73,8 @@ contaFun [] f = 0
 contaFun (id:->:(vs,t):xs) f = if f == id then contaFun xs f + 1
                                else contaFun xs f
 auxFun [] = Result(False, "", ())
-auxFun ls@((id:->:(vs,t)):xs) = if ((contaFun ls id) > 1) then do {errorMsg $ "Funcao multiplamente declarada: " ++ show id; auxVar vs (Just id); auxFun xs}
-                                else do {auxVar vs (Just id); errorMsg $ " na funcao " ++ show id; auxFun xs} 
+auxFun ls@((id:->:(vs,t)):xs) = if ((contaFun ls id) > 1) then do {errorMsg $ "Funcao multiplamente declarada: " ++ id; auxVar vs (Just id); auxFun xs}
+                                else do {auxVar vs (Just id); errorMsg $ " na funcao " ++ id; auxFun xs} 
 
 contaVar [] v = 0
 contaVar (id:#:(t,_):xs) v = if v == id then contaVar xs v + 1
@@ -83,9 +83,16 @@ contaVar (id:#:(t,_):xs) v = if v == id then contaVar xs v + 1
 auxVar [] mf_id = Result(False, "", ())
 auxVar ls@(id:#:(t,_):xs) mf_id = if((contaVar ls id) > 1) then 
   case (mf_id) of
-    (Just f_id) -> do {errorMsg $ "Variavel multiplamente declarada: " ++ show id; auxVar xs (Just f_id)} 
-    (Nothing) -> do {errorMsg $ "Variavel multiplamente declarada: " ++ show id; auxVar xs Nothing}
+    (Just f_id) -> do {errorMsg $ "Variavel multiplamente declarada: " ++ id; auxVar xs (Just f_id)} 
+    (Nothing) -> do {errorMsg $ "Variavel multiplamente declarada: " ++ id; auxVar xs Nothing}
                          else auxVar xs mf_id
+
+-- teste contaParam ["a" :#: (TInt, 0), "b":#:(TInt, 0)]
+-- teste2 contaPram [IdVar "a", IdVar "b"]
+-- Retorna a quantidade de termos na lista. No nosso caso, irá contar quantos parâmetros têm na declaração e quantos parâmetros têm na chamada
+contaParam [] = 0
+contaParam (x:xs) = 1 + contaParam xs
+
 errorMsg s = Result (True, "Erro:"++s++"\n", ())
 
 warningMsg s = Result (False, "Advertencia:"++s++"\n", ())
