@@ -22,6 +22,17 @@ naLista _ [] = return False
 naLista e (x:xs) = if(e==x) then return True
                    else naLista e xs
 
+consultaVar :: [Var] -> [Char] -> Maybe Tipo
+consultaVar [] _ = Nothing
+consultaVar (i:#:(t,_):xs) v = if v == i then (Just t)
+                               else consultaVar xs v  
+
+tComand tfun tab (Atrib id expr) = do
+  let t1 = case consultaVar tab id of
+                Just t -> t
+                Nothing -> TVoid
+  putStrLn (show t1) 
+
 consulta :: [Var] -> [Char] -> Result Tipo
 consulta [] v = do {errorMsg $ "Nao achou a variavel " ++ v; return TVoid}  
 consulta tab@(i:#:(t,_):xs) v = if v==i then return t
