@@ -40,6 +40,13 @@ auxFun [] = Result(False, "", ())
 auxFun ls@((id:->:(vs,t)):xs) = if ((contaFun ls id) > 1) then do {errorMsg $ "Funcao multiplamente declarada: " ++ show id; auxFun xs}
                                 else auxFun xs 
 
+contaVar [] v = 0
+contaVar (id:#:(t,_):xs) v = if v == id then contaVar xs v + 1
+                             else contaVar xs v 
+
+auxVar [] = Result(False, "", ())
+auxVar ls@(id:#:(t,_):xs) = if((contaVar ls id) > 1) then do {errorMsg $ "Variavel multiplamente declarada: " ++ show id; auxVar xs} 
+                         else auxVar xs
 errorMsg s = Result (True, "Erro:"++s++"\n", ())
 
 warningMsg s = Result (False, "Advertencia:"++s++"\n", ())
