@@ -27,11 +27,26 @@ consultaVar [] _ = Nothing
 consultaVar (i:#:(t,_):xs) v = if v == i then (Just t)
                                else consultaVar xs v  
 
-tComand tfun tab (Atrib id expr) = do
+tCommand tfun tab command@(Atrib id expr) = do
   let t1 = case consultaVar tab id of
                 Just t -> t
                 Nothing -> TVoid
-  putStrLn (show t1) 
+  (t2,e2) <- tExpr tfun tab expr
+  if t1 == TVoid 
+    then do
+      errorMsg("Nao pode atribuir em variavel nao declarada " ++ id)
+      return command
+  else if t1 == t2 then pure (Atrib id e2)
+  else if t1 == TDouble && t2 == TInt
+    then return (Atrib id (IntDouble e2))
+    else if t1 == TInt && t2 == TDouble
+      then do
+        warningMsg("Convertendo double para int, ja que " ++ show e2)
+        return (Atrib id (DoubleInt e2))
+      else do
+        errorMsg("Impossivel atribuir " ++ show t2 ++ " em " ++ show t1)
+        return (Atrib id expr)
+ 
 
 consulta :: [Var] -> [Char] -> Result Tipo
 consulta [] v = do {errorMsg $ "Nao achou a variavel " ++ v; return TVoid}  
