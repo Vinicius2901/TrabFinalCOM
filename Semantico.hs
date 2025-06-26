@@ -21,6 +21,13 @@ instance Monad Result where
 consulta [] v = do {errorMsg $ "Nao achou a variavel " ++ v; return TVoid}  
 consulta tab@(i:#:(t,_):xs) v = if v==i then return t
                                 else consulta xs v
+--Id :->: ([Var], Tipo) 
+
+-- consultaFunc ["foo":->:([], TVoid)] "foo"
+consultaFunc [] f = do {errorMsg $ "Nao achou a funcao " ++ show f; return TVoid}
+consultaFunc (id:->:(vs,t):xs) f = if f==id then return t
+                                       else consultaFunc xs f
+
 
 
 errorMsg s = Result (True, "Erro:"++s++"\n", ())
@@ -71,7 +78,6 @@ tExpr tfun tab(DoubleInt e1) = do
       errorMsg("Tipo inválido para conversão " ++ show t)
       return(t, e')
 
-
 tExpr tfun tab (IdVar x) = do {t <- consulta tab x; return (t, IdVar x)}
 tExpr tfun tab (Lit s) = return (TString, Lit s)
 tExpr tfun tab (Add e1 e2) = do {(t1, e1') <- tExpr tfun tab e1;
@@ -87,6 +93,15 @@ tExpr tfun tab (Mul e1 e2) = do {(t1, e1') <- tExpr tfun tab e1;
 tExpr tfun tab (Div e1 e2) = do {(t1, e1') <- tExpr tfun tab e1;
                                  (t2, e2') <- tExpr tfun tab e2;
                                  coercaoDiv Div e1' e2' t1 t2}
+
+auxExprR :: [Funcao] -> [Var] -> ExprR -> Result ExprR
+auxExprR tfun tab op@(Req e1 e2) = tExprR tfun tab Req e1 e2
+auxExprR tfun tab op@(Rdif e1 e2) = tExprR tfun tab Rdif e1 e2
+auxExprR tfun tab op@(Rle e1 e2) = tExprR tfun tab Rle e1 e2
+auxExprR tfun tab op@(Rlt e1 e2) = tExprR tfun tab Rlt e1 e2
+auxExprR tfun tab op@(Rge e1 e2) = tExprR tfun tab Rge e1 e2
+auxExprR tfun tab op@(Rgt e1 e2) = tExprR tfun tab Rgt e1 e2
+
 
 -- Req, Rdif, Rle, Rlt... são como funções que recebem dois parâmetros
 -- exemplo de insert: tExprR [] [] Req (Const (CInt 0)) (Const (CDouble 3.0))
@@ -109,3 +124,21 @@ tExprR tfun tab op e1 e2 = do
       else do
         errorMsg("Expressões incompatíveis " ++ show e1' ++ " com " ++ show e2')
         return(op e1' e2)
+
+auxExprL :: [Funcao] -> [Var] -> ExprL -> Result ExprL
+auxExprL tfun tab op@(And e1 e2) = tExprL tfun tab And e1 e2
+auxExprL tfun tab op@(Or e1 e2) = tExprL tfun tab Or e1 e2
+auxExprL tfun tab op@(Not e1) = auxExprL tfun tab e1
+auxExprL tfun tab op@(Rel rop) = pure Rel <*> auxExprR tfun tab rop
+
+
+tExprL :: [Funcao] -> [Var] -> (ExprL -> ExprL -> ExprL) -> ExprL -> ExprL -> Result ExprL
+tExprL tfun tab op e1 e2 = do
+  e1' <- auxExprL tfun tab e1
+  e2' <- auxExprL tfun tab e2
+  pure(op e1' e2')
+
+
+naLista _ [] = return False
+naLista e (x:xs) = if(e==x) then return True
+                   else naLista e xs
