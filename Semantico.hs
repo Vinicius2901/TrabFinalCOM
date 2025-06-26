@@ -47,6 +47,16 @@ tCommand tfun tab command@(Atrib id expr) = do
         errorMsg("Impossivel atribuir " ++ show t2 ++ " em " ++ show t1)
         return (Atrib id expr)
  
+tCommand tfun tab command@(Leitura id) = do
+  let t1 = case consultaVar tab id of
+                Just t -> t
+                Nothing -> TVoid
+  if t1 == TVoid
+    then do
+      errorMsg("Nao pode ler de uma variavel nao declarada " ++ id)
+      return command
+  else 
+    return command
 
 consulta :: [Var] -> [Char] -> Result Tipo
 consulta [] v = do {errorMsg $ "Nao achou a variavel " ++ v; return TVoid}  
