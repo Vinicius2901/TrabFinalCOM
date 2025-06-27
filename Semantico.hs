@@ -18,10 +18,6 @@ instance Monad Result where
   Result (b, s, a) >>= f = let Result (b', s', a') = f a in Result (b || b', s++s', a')
   
 
-naLista _ [] = return False
-naLista e (x:xs) = if(e==x) then return True
-                   else naLista e xs
-
 consultaVar :: [Var] -> [Char] -> Maybe Tipo
 consultaVar [] _ = Nothing
 consultaVar (i:#:(t,_):xs) v = if v == i then (Just t)
