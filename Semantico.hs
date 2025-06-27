@@ -25,7 +25,7 @@ consultaVar [] _ = Nothing
 consultaVar (i:#:(t,_):xs) v = if v == i then (Just t)
                                else consultaVar xs v  
 
-tFuncoes :: [Funcao] -> [(a, [Var], [Comando])] -> Result [(Funcao, [Comando], [[Var]])]
+tFuncoes :: [Funcao] -> [(a, [Var], [Comando])] -> Result [(Funcao, [Comando], [Var])]
 tFuncoes [] [] = return []
 tFuncoes tfun ls = do
   let (f:fs) = tfun
@@ -40,7 +40,7 @@ tFuncao tfun f (id, tab, bloco) = do
   f' <- auxFun tfun f
   let (var:vars) = tab
   b' <- tBloco tfun f tab bloco
-  v' <- auxAuxVar tab
+  v' <- auxVar tab []
   
   return (f', b', v')
 
@@ -200,18 +200,13 @@ contaVar [] v = 0
 contaVar (id:#:(t,_):xs) v = if v == id then contaVar xs v + 1
                              else contaVar xs v 
 
-auxVar [] v = Result(False, "", (v))
-auxVar ls v@(vid:#:(vt,_)) = if((contaVar ls vid) > 1) then do 
-  errorMsg $ "Variavel multiplamente declarada: " ++ vid
-  return (v)
-  else
-    return (v)
-
-auxAuxVar [] = return []
-auxAuxVar ls@(id:#:(t,i):xs) = do 
-  auxVar ls (id:#:(t,i))
-  auxAuxVar xs
-  return [(id:#:(t,i)):xs]
+auxVar [] vistos = return vistos
+auxVar ls@(id:#:(t,i):xs) vistos  = do 
+  if contaVar vistos id > 0 then do
+    errorMsg $ "Variavel multiplamente declarada: " ++ id
+    auxVar xs vistos
+  else do
+    auxVar xs ((id:#:(t,i)):vistos)
 -- teste contaParam ["a" :#: (TInt, 0), "b":#:(TInt, 0)]
 -- teste2 contaParam [IdVar "a", IdVar "b"]
 -- Retorna a quantidade de termos na lista. No nosso caso, irá contar quantos parâmetros têm na declaração e quantos parâmetros têm na chamada
