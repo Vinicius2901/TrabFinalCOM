@@ -26,7 +26,8 @@ consultaVar (i:#:(t,_):xs) v = if v == i then (Just t)
                                else consultaVar xs v  
 
 analisarSemantica ri = do
-  analisarProg ri
+  let Result(_,msg,_) = analisarProg ri
+  putStrLn(msg)
   
 analisarProg (Prog listaFunc escopoFunc varMain blocoMain) = do
   (analiseFunc, analiseVarFunc) <- tFuncoes listaFunc escopoFunc
