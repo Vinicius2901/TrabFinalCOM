@@ -25,14 +25,23 @@ consultaVar [] _ = Nothing
 consultaVar (i:#:(t,_):xs) v = if v == i then (Just t)
                                else consultaVar xs v  
 
-tFuncoes :: [Funcao] -> [(a, [Var], [Comando])] -> Result [(Funcao, [Comando], [Var])]
-tFuncoes [] [] = return []
+analisarSemantica ri = do
+  Result(a,b,c) <- analisarProg ri
+  printar b
+  
+analisarProg (Prog listaFunc escopoFunc varMain blocoMain) = do
+  (analiseFunc, analiseVarFunc) <- tFuncoes listaFunc escopoFunc
+  blocoMain' <- tBloco listaFunc Nothing varMain blocoMain
+  varMain' <- auxVar varMain []
+  return (Prog analiseFunc analiseVarFunc varMain blocoMain')
+
+tFuncoes [] [] = return ([],[])
 tFuncoes tfun ls = do
   let (f:fs) = tfun
   let ((id, tab, bloco):resto) = ls
   f' <- tFuncao tfun f (id, tab, bloco)
   resp <- tFuncoes fs resto
-  return (f':resp)
+  return (fst f': fst resp, snd f' : snd resp)
   
 
 
@@ -42,7 +51,7 @@ tFuncao tfun f (id, tab, bloco) = do
   b' <- tBloco tfun (Just f) tab bloco
   v' <- auxVar tab []
   
-  return (f', b', v')
+  return (f', (id, v', b'))
 
 tBloco tfun f tab [] = return []
 tBloco tfun f tab (comando : bloco) = do
@@ -64,7 +73,7 @@ tCommand tfun tab command@(Atrib id expr) _ = do
     then return (Atrib id (IntDouble e2))
     else if t1 == TInt && t2 == TDouble
       then do
-        warningMsg("Convertendo double para int, ja que " ++ show e2)
+        warningMsg("Convertendo double para int, ja que " ++ show e2 ++ " eh double e " ++ id ++ " eh int")
         return (Atrib id (DoubleInt e2))
       else do
         errorMsg("Impossivel atribuir " ++ show t2 ++ " em " ++ show t1)
