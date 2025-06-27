@@ -39,7 +39,7 @@ tFuncoes tfun ls = do
 tFuncao tfun f (id, tab, bloco) = do
   f' <- auxFun tfun f
   let (var:vars) = tab
-  b' <- tBloco tfun f tab bloco
+  b' <- tBloco tfun (Just f) tab bloco
   v' <- auxVar tab []
   
   return (f', b', v')
@@ -106,7 +106,7 @@ tCommand tfun tab command@(Proc id ls) _ = do
     else auxProc tfun tab vars ls command
 
 -- id :->: ([Var], Tipo)
-tCommand tfun tab command@(Ret maybe) f@(id:->:(ls,tret)) = do
+tCommand tfun tab command@(Ret maybe) f@(Just (id:->:(ls,tret))) = do
   case maybe of
     Just expr -> do
       (t',e') <- tExpr tfun tab expr
@@ -130,6 +130,15 @@ tCommand tfun tab command@(Ret maybe) f@(id:->:(ls,tret)) = do
       else do
         errorMsg $ "Funcao espera retorno de tipo " ++ show tret ++ ", mas nao foi retornado."
         return command
+
+tCommand tfun tab command@(Ret maybe) f@(Nothing) = do
+  case maybe of
+    Just expr -> do
+      (t',e') <- tExpr tfun tab expr
+      errorMsg $ "Tipo de retorno da funcao eh void, mas foi retornado " ++ show t'
+      return command
+    Nothing -> do
+      return command
     
 
 auxProc tfun tab [] [] command@(Proc id ls) = return command
