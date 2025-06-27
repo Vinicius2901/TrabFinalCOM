@@ -18,10 +18,25 @@ instance Monad Result where
   Result (b, s, a) >>= f = let Result (b', s', a') = f a in Result (b || b', s++s', a')
   
 
+
+
 consultaVar :: [Var] -> [Char] -> Maybe Tipo
 consultaVar [] _ = Nothing
 consultaVar (i:#:(t,_):xs) v = if v == i then (Just t)
                                else consultaVar xs v  
+tFuncao tfun f (id, tab, bloco) = do
+  f' <- auxFun tfun f
+  let (var:vars) = tab
+  b' <- tBloco tfun f tab bloco
+  v' <- auxAuxVar tab
+  
+  return (f', b', v')
+
+tBloco tfun f tab [] = return []
+tBloco tfun f tab (comando : bloco) = do
+  c' <- tCommand tfun tab comando f
+  b' <- tBloco tfun f tab bloco
+  return (c':b')
 
 tCommand tfun tab command@(Atrib id expr) _ = do
   let t1 = case consultaVar tab id of
@@ -161,21 +176,26 @@ consultaFunc (id:->:(vs,t):xs) f = if f==id then return (id:->:(vs,t))
 contaFun [] f = 0
 contaFun (id:->:(vs,t):xs) f = if f == id then contaFun xs f + 1
                                else contaFun xs f
-auxFun [] = Result(False, "", ())
-auxFun ls@((id:->:(vs,t)):xs) = if ((contaFun ls id) > 1) then do {errorMsg $ "Funcao multiplamente declarada: " ++ id; auxVar vs (Just id); auxFun xs}
-                                else do {auxVar vs (Just id); errorMsg $ " na funcao " ++ id; auxFun xs} 
+
+auxFun ls@((id:->:(vs,t)):xs) f@(fid:->:(fvs,ft)) = if ((contaFun ls fid) > 1) then do {errorMsg $ "Funcao multiplamente declarada: " ++ fid; return (f)}
+                                                    else return (f)
 
 contaVar [] v = 0
 contaVar (id:#:(t,_):xs) v = if v == id then contaVar xs v + 1
                              else contaVar xs v 
 
-auxVar [] mf_id = Result(False, "", ())
-auxVar ls@(id:#:(t,_):xs) mf_id = if((contaVar ls id) > 1) then 
-  case (mf_id) of
-    (Just f_id) -> do {errorMsg $ "Variavel multiplamente declarada: " ++ id; auxVar xs (Just f_id)} 
-    (Nothing) -> do {errorMsg $ "Variavel multiplamente declarada: " ++ id; auxVar xs Nothing}
-                         else auxVar xs mf_id
+auxVar [] v = Result(False, "", (v))
+auxVar ls v@(vid:#:(vt,_)) = if((contaVar ls vid) > 1) then do 
+  errorMsg $ "Variavel multiplamente declarada: " ++ vid
+  return (v)
+  else
+    return (v)
 
+auxAuxVar [] = return []
+auxAuxVar ls@(id:#:(t,i):xs) = do 
+  auxVar ls (id:#:(t,i))
+  auxAuxVar xs
+  return [(id:#:(t,i)):xs]
 -- teste contaParam ["a" :#: (TInt, 0), "b":#:(TInt, 0)]
 -- teste2 contaParam [IdVar "a", IdVar "b"]
 -- Retorna a quantidade de termos na lista. No nosso caso, irá contar quantos parâmetros têm na declaração e quantos parâmetros têm na chamada
