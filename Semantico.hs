@@ -24,6 +24,18 @@ consultaVar :: [Var] -> [Char] -> Maybe Tipo
 consultaVar [] _ = Nothing
 consultaVar (i:#:(t,_):xs) v = if v == i then (Just t)
                                else consultaVar xs v  
+
+tFuncoes :: [Funcao] -> [(a, [Var], [Comando])] -> Result [(Funcao, [Comando], [[Var]])]
+tFuncoes [] [] = return []
+tFuncoes tfun ls = do
+  let (f:fs) = tfun
+  let ((id, tab, bloco):resto) = ls
+  f' <- tFuncao tfun f (id, tab, bloco)
+  resp <- tFuncoes fs resto
+  return (f':resp)
+  
+
+
 tFuncao tfun f (id, tab, bloco) = do
   f' <- auxFun tfun f
   let (var:vars) = tab
@@ -174,11 +186,15 @@ consultaFunc [] f = do {errorMsg $ "Nao achou a funcao " ++ show f; return ((f++
 consultaFunc (id:->:(vs,t):xs) f = if f==id then return (id:->:(vs,t))
                                        else consultaFunc xs f
 contaFun [] f = 0
-contaFun (id:->:(vs,t):xs) f = if f == id then contaFun xs f + 1
-                               else contaFun xs f
+contaFun ls f = do
+  let (id:->:(vs,t):xs) = ls
+  if f == id then contaFun xs f + 1
+  else contaFun xs f
 
-auxFun ls@((id:->:(vs,t)):xs) f@(fid:->:(fvs,ft)) = if ((contaFun ls fid) > 1) then do {errorMsg $ "Funcao multiplamente declarada: " ++ fid; return (f)}
-                                                    else return (f)
+auxFun ls f@(fid:->:(fvs,ft)) = do
+  let ((id:->:(vs,t)):xs) = ls
+  if ((contaFun ls fid) > 1) then do {errorMsg $ "Funcao multiplamente declarada: " ++ fid; return (f)}
+  else return (f)
 
 contaVar [] v = 0
 contaVar (id:#:(t,_):xs) v = if v == id then contaVar xs v + 1
