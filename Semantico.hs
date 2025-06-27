@@ -25,16 +25,19 @@ consultaVar [] _ = Nothing
 consultaVar (i:#:(t,_):xs) v = if v == i then (Just t)
                                else consultaVar xs v  
 
+analisarSemantica :: Programa -> IO ()
 analisarSemantica ri = do
   let Result(_,msg,_) = analisarProg ri
   putStrLn(msg)
   
+analisarProg :: Programa -> Result Programa
 analisarProg (Prog listaFunc escopoFunc varMain blocoMain) = do
   (analiseFunc, analiseVarFunc) <- tFuncoes listaFunc escopoFunc
   blocoMain' <- tBloco listaFunc Nothing varMain blocoMain
   varMain' <- auxVar varMain []
   return (Prog analiseFunc analiseVarFunc varMain blocoMain')
 
+tFuncoes :: [Funcao] -> [(a, [Var], [Comando])] -> Result ([Funcao], [(a, [Var], [Comando])])
 tFuncoes [] [] = return ([],[])
 tFuncoes tfun ls = do
   let (f:fs) = tfun
@@ -45,6 +48,7 @@ tFuncoes tfun ls = do
   
 
 
+tFuncao :: [Funcao] -> Funcao -> (a, [Var], [Comando]) -> Result (Funcao, (a, [Var], [Comando]))
 tFuncao tfun f (id, tab, bloco) = do
   f' <- auxFun tfun f
   let (var:vars) = tab
@@ -53,12 +57,14 @@ tFuncao tfun f (id, tab, bloco) = do
   
   return (f', (id, v', b'))
 
+tBloco :: [Funcao] -> Maybe Funcao -> [Var] -> [Comando] -> Result [Comando]
 tBloco tfun f tab [] = return []
 tBloco tfun f tab (comando : bloco) = do
   c' <- tCommand tfun tab comando f
   b' <- tBloco tfun f tab bloco
   return (c':b')
 
+tCommand :: [Funcao] -> [Var] -> Comando -> Maybe Funcao -> Result Comando
 tCommand tfun tab command@(Atrib id expr) _ = do
   let t1 = case consultaVar tab id of
                 Just t -> t
@@ -150,6 +156,7 @@ tCommand tfun tab command@(Ret maybe) f@(Nothing) = do
       return command
     
 
+auxProc :: [Funcao] -> [Var] -> [Var] -> [Expr] -> Comando -> Result Comando
 auxProc tfun tab [] [] command@(Proc id ls) = return command
 auxProc tfun tab (var@(id:#:(t, _)):xs) (y:ys) command@(Proc id1 ls) = do (t1, e1) <- tExpr tfun tab y
                                                                           if t1 == TString && t /= TString || t1 /= TString && t == TString 
@@ -164,6 +171,7 @@ auxProc tfun tab (var@(id:#:(t, _)):xs) (y:ys) command@(Proc id1 ls) = do (t1, e
                                                                                   return command
                                                     
 
+auxCham :: [Funcao] -> [Var] -> [Var] -> [Expr] -> Expr -> Result Expr
 auxCham tfun tab [] [] chamada@(Chamada id ls) = return chamada
 auxCham tfun tab (var@(id:#:(t, _)):xs) (y:ys) chamada@(Chamada id1 ls) = do (t1, e1) <- tExpr tfun tab y
                                                                              if t1 == TString && t /= TString || t1 /= TString && t == TString 
@@ -184,6 +192,7 @@ auxCham tfun tab (var@(id:#:(t, _)):xs) (y:ys) chamada@(Chamada id1 ls) = do (t1
                                             
 
 
+percorreBloco :: [Comando] -> [Funcao] -> [Var] -> Maybe Funcao -> Result [Comando]
 percorreBloco [] tfun tab f = pure []
 percorreBloco (x:xs) tfun tab f = do 
   tCommand tfun tab x f
@@ -203,21 +212,25 @@ consultaFunc :: [Funcao] -> Id -> Result Funcao
 consultaFunc [] f = do {errorMsg $ "Nao achou a funcao " ++ show f; return ((f++"\'"):->:([],TVoid))}
 consultaFunc (id:->:(vs,t):xs) f = if f==id then return (id:->:(vs,t))
                                        else consultaFunc xs f
+contaFun :: Num a => [Funcao] -> Id -> a
 contaFun [] f = 0
 contaFun ls f = do
   let (id:->:(vs,t):xs) = ls
   if f == id then contaFun xs f + 1
   else contaFun xs f
 
+auxFun :: [Funcao] -> Funcao -> Result Funcao
 auxFun ls f@(fid:->:(fvs,ft)) = do
   let ((id:->:(vs,t)):xs) = ls
   if ((contaFun ls fid) > 1) then do {errorMsg $ "Funcao multiplamente declarada: " ++ fid; return (f)}
   else return (f)
 
+contaVar :: Num a => [Var] -> Id -> a
 contaVar [] v = 0
 contaVar (id:#:(t,_):xs) v = if v == id then contaVar xs v + 1
                              else contaVar xs v 
 
+auxVar :: [Var] -> [Var] -> Result [Var]
 auxVar [] vistos = return vistos
 auxVar ls@(id:#:(t,i):xs) vistos  = do 
   if contaVar vistos id > 0 then do
@@ -228,6 +241,7 @@ auxVar ls@(id:#:(t,i):xs) vistos  = do
 -- teste contaParam ["a" :#: (TInt, 0), "b":#:(TInt, 0)]
 -- teste2 contaParam [IdVar "a", IdVar "b"]
 -- Retorna a quantidade de termos na lista. No nosso caso, irá contar quantos parâmetros têm na declaração e quantos parâmetros têm na chamada
+contaParam :: Num a1 => [a2] -> a1
 contaParam [] = 0
 contaParam (x:xs) = 1 + contaParam xs
 
