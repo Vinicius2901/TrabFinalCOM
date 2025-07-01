@@ -27,7 +27,8 @@ consultaVar (i:#:(t,_):xs) v = if v == i then (Just t)
 
 analisarSemantica :: Programa -> IO ()
 analisarSemantica ri = do
-  let Result(_,msg,_) = analisarProg ri
+  let Result(_,msg,sint) = analisarProg ri
+  print("Erros e advertências após a análise sintática:\n")
   putStrLn(msg)
   
 analisarProg :: Programa -> Result Programa
