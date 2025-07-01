@@ -36,7 +36,7 @@ analisarProg (Prog listaFunc escopoFunc varMain blocoMain) = do
   (analiseFunc, analiseVarFunc) <- tFuncoes listaFunc escopoFunc
   blocoMain' <- tBloco listaFunc Nothing varMain blocoMain
   varMain' <- auxVar varMain []
-  return (Prog analiseFunc analiseVarFunc varMain blocoMain')
+  return (Prog analiseFunc analiseVarFunc varMain' blocoMain')
 
 tFuncoes :: [Funcao] -> [(a, [Var], [Comando])] -> Result ([Funcao], [(a, [Var], [Comando])])
 tFuncoes [] [] = return ([],[])
@@ -66,33 +66,39 @@ tBloco tfun f tab (comando : bloco) = do
   return (c':b')
 
 tCommand :: [Funcao] -> [Var] -> Comando -> Maybe Funcao -> Result Comando
-tCommand tfun tab command@(Atrib id expr) _ = do
+tCommand tfun tab command@(Atrib id expr) f = do
+  let f'@(idf:->:(_,_)) = case f of
+                               Just a -> a
+                               Nothing -> ("":->:([],TVoid))
   let t1 = case consultaVar tab id of
                 Just t -> t
                 Nothing -> TVoid
   (t2,e2) <- tExpr tfun tab expr
   if t1 == TVoid 
     then do
-      errorMsg("Nao pode atribuir em variavel nao declarada " ++ id)
+      errorMsg("Nao pode atribuir em variavel nao declarada " ++ show id ++ " Na funcao " ++ show idf)
       return command
   else if t1 == t2 then pure (Atrib id e2)
   else if t1 == TDouble && t2 == TInt
     then return (Atrib id (IntDouble e2))
     else if t1 == TInt && t2 == TDouble
       then do
-        warningMsg("Convertendo double para int, ja que " ++ show e2 ++ " eh double e " ++ id ++ " eh int")
+        warningMsg("Convertendo double para int, ja que " ++ show e2 ++ " eh double e " ++ show id ++ " eh int na funcao " ++ show idf)
         return (Atrib id (DoubleInt e2))
       else do
-        errorMsg("Impossivel atribuir " ++ show t2 ++ " em " ++ show t1)
+        errorMsg("Impossivel atribuir " ++ show t2 ++ " em " ++ show t1 ++ " na funcao " ++ show idf)
         return (Atrib id expr)
  
-tCommand tfun tab command@(Leitura id) _ = do
+tCommand tfun tab command@(Leitura id) f = do
+  let f'@(idf:->:(_,_)) = case f of
+                               Just a -> a
+                               Nothing -> ("":->:([],TVoid))
   let t1 = case consultaVar tab id of
                 Just t -> t
                 Nothing -> TVoid
   if t1 == TVoid
     then do
-      errorMsg("Nao pode ler de uma variavel nao declarada " ++ id)
+      errorMsg("Nao pode ler de uma variavel nao declarada " ++ id ++ " na funcao " ++ show idf)
       return command
   else 
     return command
@@ -110,14 +116,17 @@ tCommand tfun tab command@(If exprl b1 b2) f = do
 tCommand tfun tab command@(While exprl b) f = do 
   ex <- auxExprL tfun tab exprl
   b' <- percorreBloco b tfun tab f
-  pure(While exprl b)
+  pure(While exprl b')
 
-tCommand tfun tab command@(Proc id ls) _ = do 
+tCommand tfun tab command@(Proc id ls) f = do
+  let f'@(idf:->:(_,_)) = case f of
+                               Just a -> a
+                               Nothing -> ("":->:([],TVoid)) 
   func@(id':->:(vars, tret)) <- consultaFunc tfun id
   if (id /= id') then return command
   else 
     if (contaParam ls /= contaParam (vars)) 
-      then do errorMsg $ "Contagem de parametros nao bate com a declaracao " ++ show command
+      then do errorMsg $ "Contagem de parametros nao bate com a declaracao " ++ show command ++ " Na funcao " ++ show idf
               return command
     else auxProc tfun tab vars ls command
 
@@ -133,25 +142,25 @@ tCommand tfun tab command@(Ret maybe) f@(Just (id:->:(ls,tret))) = do
         errorMsg $ "Tipo de retorno incompativel em " ++ show f ++ "\nEsperado: " ++ show tret ++ "\nRecebido: " ++ show t'
         return command
       else if(tret == TInt && t' == TDouble) then do
-        warningMsg $ "Tipo de retorno recebido double em funcao que retorna int"
+        warningMsg $ "Tipo de retorno recebido double em funcao que retorna int na funcao " ++ show id
         return command
       else if(tret == TDouble && t'==TInt) then
         return command
       else do
-        errorMsg $ "Tipo de retorno da funcao eh void, mas foi retornado " ++ show t'
+        errorMsg $ "Tipo de retorno da funcao eh void, mas foi retornado " ++ show t' ++ " na funcao " ++ show id
         return command
     Nothing -> do
       if(tret == TVoid) then
         return command
       else do
-        errorMsg $ "Funcao espera retorno de tipo " ++ show tret ++ ", mas nao foi retornado."
+        errorMsg $ "Funcao " ++ show id ++ "espera retorno de tipo " ++ show tret ++ ", mas nao foi retornado."
         return command
 
 tCommand tfun tab command@(Ret maybe) f@(Nothing) = do
   case maybe of
     Just expr -> do
       (t',e') <- tExpr tfun tab expr
-      errorMsg $ "Tipo de retorno da funcao eh void, mas foi retornado " ++ show t'
+      errorMsg $ "Tipo de retorno da funcao principal eh void, mas foi retornado " ++ show t'
       return command
     Nothing -> do
       return command
@@ -161,11 +170,11 @@ auxProc :: [Funcao] -> [Var] -> [Var] -> [Expr] -> Comando -> Result Comando
 auxProc tfun tab [] [] command@(Proc id ls) = return command
 auxProc tfun tab (var@(id:#:(t, _)):xs) (y:ys) command@(Proc id1 ls) = do (t1, e1) <- tExpr tfun tab y
                                                                           if t1 == TString && t /= TString || t1 /= TString && t == TString 
-                                                                            then do errorMsg $ "Tipos incompativeis na chamada da funcao " ++ id1 ++ "\nEspera-se: " ++ show t ++ "\nEnviou-se: " ++ show t1
+                                                                            then do errorMsg $ "Tipos incompativeis na chamada da funcao " ++ show id1 ++ "\nEspera-se: " ++ show t ++ "\nEnviou-se: " ++ show t1
                                                                                     auxProc tfun tab xs ys command
                                                                                     return command
                                                                           else if t == TInt && t1 == TDouble 
-                                                                            then do warningMsg $ "Fornecido double para a funcao " ++ id1 ++  " com parametro int " ++ show var
+                                                                            then do warningMsg $ "Fornecido double para a funcao " ++ show id1 ++  " com parametro int " ++ show var
                                                                                     auxProc tfun tab xs ys command
                                                                                     return command
                                                                           else do auxProc tfun tab xs ys command 
@@ -176,11 +185,11 @@ auxCham :: [Funcao] -> [Var] -> [Var] -> [Expr] -> Expr -> Result Expr
 auxCham tfun tab [] [] chamada@(Chamada id ls) = return chamada
 auxCham tfun tab (var@(id:#:(t, _)):xs) (y:ys) chamada@(Chamada id1 ls) = do (t1, e1) <- tExpr tfun tab y
                                                                              if t1 == TString && t /= TString || t1 /= TString && t == TString 
-                                                                               then do errorMsg $ "Tipos incompativeis na chamada da funcao " ++ id1 ++ "\nEspera-se: " ++ show t ++ "\nEnviou-se: " ++ show t1
+                                                                               then do errorMsg $ "Tipos incompativeis na chamada da funcao " ++ show id1 ++ "\nEspera-se: " ++ show t ++ "\nEnviou-se: " ++ show t1
                                                                                        auxCham tfun tab xs ys chamada
                                                                                        return chamada
                                                                              else if t == TInt && t1 == TDouble 
-                                                                               then do warningMsg $ "Fornecido double para a funcao " ++ id1 ++  " com parametro int " ++ show var
+                                                                               then do warningMsg $ "Fornecido double para a funcao " ++ show id1 ++  " com parametro int " ++ show var
                                                                                        auxCham tfun tab xs ys chamada
                                                                                        return chamada
                                                                              else do auxCham tfun tab xs ys chamada 
@@ -194,16 +203,16 @@ auxCham tfun tab (var@(id:#:(t, _)):xs) (y:ys) chamada@(Chamada id1 ls) = do (t1
 
 
 percorreBloco :: [Comando] -> [Funcao] -> [Var] -> Maybe Funcao -> Result [Comando]
-percorreBloco [] tfun tab f = pure []
+percorreBloco [] tfun tab f = return []
 percorreBloco (x:xs) tfun tab f = do 
-  tCommand tfun tab x f
-  percorreBloco xs tfun tab f
-  pure[x]
+  x' <- tCommand tfun tab x f
+  result <- percorreBloco xs tfun tab f
+  return (x':result)
 
 
 
 consulta :: [Var] -> [Char] -> Result Tipo
-consulta [] v = do {errorMsg $ "Nao achou a variavel " ++ v; return TVoid}  
+consulta [] v = do {errorMsg $ "Nao achou a variavel " ++ show v; return TVoid}  
 consulta tab@(i:#:(t,_):xs) v = if v==i then return t
                                 else consulta xs v
 
@@ -223,7 +232,7 @@ contaFun ls f = do
 auxFun :: [Funcao] -> Funcao -> Result Funcao
 auxFun ls f@(fid:->:(fvs,ft)) = do
   let ((id:->:(vs,t)):xs) = ls
-  if ((contaFun ls fid) > 1) then do {errorMsg $ "Funcao multiplamente declarada: " ++ fid; return (f)}
+  if ((contaFun ls fid) > 1) then do {errorMsg $ "Funcao multiplamente declarada: " ++ show fid; return (f)}
   else return (f)
 
 contaVar :: Num a => [Var] -> Id -> a
@@ -235,7 +244,7 @@ auxVar :: [Var] -> [Var] -> Result [Var]
 auxVar [] vistos = return vistos
 auxVar ls@(id:#:(t,i):xs) vistos  = do 
   if contaVar vistos id > 0 then do
-    errorMsg $ "Variavel multiplamente declarada: " ++ id
+    errorMsg $ "Variavel multiplamente declarada: " ++ show id
     auxVar xs vistos
   else do
     auxVar xs ((id:#:(t,i)):vistos)
@@ -285,7 +294,7 @@ tExpr tfun tab (IntDouble e1) = do
             errorMsg("Tipo inválido para conversão " ++ show t) 
             return(t, e')
 
-tExpr tfun tab(DoubleInt e1) = do
+tExpr tfun tab (DoubleInt e1) = do
    (t, e') <- tExpr tfun tab e1
    if t == TDouble then pure (TInt, DoubleInt e')
    else if t == TInt then do
