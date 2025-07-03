@@ -1,7 +1,7 @@
 import Control.Monad.State
 import RI
 
-type Estado = State String
+type Estado = State Int
 
 novoLabel::State Int String 
 novoLabel = do {
@@ -18,6 +18,13 @@ genMainCab s l = return (".method public static main([Ljava/lang/String;)V" ++
 
 genExprL :: a -> [Var] -> [Funcao] -> String -> String -> ExprL -> State Int String
 genExprL c tab fun v f (Rel e) = genExprR c tab fun v f e
+genExprL c tab fun v f (Not e) = genExprL c tab fun f v e
+genExprL c tab fun v f (Or e1 e2) = do {
+    l1 <- novoLabel;
+    e1' <- genExprL c tab fun v l1 e1;
+    e2' <- genExprL c tab fun v f e2;
+    return (e1'++l1++":\n"++e2')
+}
 genExprL c tab fun v f (And e1 e2) = do {
     l1 <- novoLabel; 
     e1' <- genExprL c tab fun l1 f e1; 
@@ -88,20 +95,26 @@ genOp t op = do
 
 main = do
     let inicial = 0
-    let expr = (Add (Const (CInt 10)) (Const (CInt 20)))
-    let ((t, s), f) = runState (genExpr "a" [] [] expr) inicial
+    -- let expr = (Add (Const (CInt 10)) (Const (CInt 20)))
+    -- let ((t, s), f) = runState (genExpr "a" [] [] expr) inicial
     -- let exprR = (Req (Const (CInt 10)) (Const (CInt 30)))
     -- let (s, f) = runState (genExprR "a" [] [] "l1" "l2" exprR) inicial
+    let exprL = (Not(Or (Rel (Rdif (Const (CInt 3)) ((Const (CInt 4))))) (Rel (Rle (Const (CInt 5)) ((Const (CInt 6)))))))
+    -- let (s, f) = runState (genExprL "a" [] [] "l1" "l2" exprL) inicial
+    let whil = (While (exprL) [])
+    let (s, f) = runState (genCmd "a" [] [] whil) inicial 
     putStrLn(s)
 
+genBloco :: a -> [Var] -> [Funcao] -> b -> State Int String
+genBloco c tab fun b = return ("oi")
 
--- genCmd c tab fun (While e b) = do {
---     li <- novoLabel; 
---     lv <- novoLabel; 
---     lf <- novoLabel; 
---     e' <- genExprL c tab fun lv lf e; 
---     b' <- genBloco c tab fun b; 
---     return (li++":\n"++e'++lv++":\n"++b'++"\tgoto "++li++"\n"++lf++":\n")}
--- todo
+genCmd :: a -> [Var] -> [Funcao] -> Comando -> State Int String
+genCmd c tab fun (While e b) = do {
+    li <- novoLabel; 
+    lv <- novoLabel; 
+    lf <- novoLabel; 
+    e' <- genExprL c tab fun lv lf e; 
+    b' <- genBloco c tab fun b; 
+    return (li++":\n"++e'++lv++":\n"++b'++"\tgoto "++li++"\n"++lf++":\n")}
 
 -- gerar nome p = fst $ runState (genProg nome p) 0
