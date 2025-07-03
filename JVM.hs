@@ -31,7 +31,6 @@ genExprL c tab fun v f (And e1 e2) = do {
     e2' <- genExprL c tab fun v f e2; 
     return (e1'++l1++":\n"++e2')
 }
--- todo
 
 genExprRAux :: a -> [Var] -> [Funcao] -> String -> String -> (Expr -> Expr -> ExprR) -> Expr -> Expr -> State Int String
 genExprRAux c tab fun v f op e1 e2 = do {
@@ -98,23 +97,34 @@ main = do
     -- let expr = (Add (Const (CInt 10)) (Const (CInt 20)))
     -- let ((t, s), f) = runState (genExpr "a" [] [] expr) inicial
     -- let exprR = (Req (Const (CInt 10)) (Const (CInt 30)))
-    -- let (s, f) = runState (genExprR "a" [] [] "l1" "l2" exprR) inicial
-    let exprL = (Not(Or (Rel (Rdif (Const (CInt 3)) ((Const (CInt 4))))) (Rel (Rle (Const (CInt 5)) ((Const (CInt 6)))))))
+    let e1 = (Const (CInt 3))
+    let req = (If (Rel(Req e1 e1)) [] [])
+    let (s, f) = runState (genCmd "a" [] [] req) inicial
+    -- let exprL = (Not(Or (Rel (Rdif (Const (CInt 3)) ((Const (CInt 4))))) (Rel (Rle (Const (CInt 5)) ((Const (CInt 6)))))))
     -- let (s, f) = runState (genExprL "a" [] [] "l1" "l2" exprL) inicial
-    let whil = (While (exprL) [])
-    let (s, f) = runState (genCmd "a" [] [] whil) inicial 
+    -- let whil = (While (exprL) [])
+    -- let (s, f) = runState (genCmd "a" [] [] whil) inicial 
     putStrLn(s)
+    
 
 genBloco :: a -> [Var] -> [Funcao] -> b -> State Int String
 genBloco c tab fun b = return ("oi")
 
 genCmd :: a -> [Var] -> [Funcao] -> Comando -> State Int String
+genCmd c tab fun (If e b1 b2) = do {
+    lv <- novoLabel;
+    lf <- novoLabel;
+    e' <- genExprL c tab fun lv lf e;
+    b' <- genBloco c tab fun b1;
+    return (e'++lv++":\n"++b'++"\n"++lf++":\n")
+}
 genCmd c tab fun (While e b) = do {
     li <- novoLabel; 
     lv <- novoLabel; 
     lf <- novoLabel; 
     e' <- genExprL c tab fun lv lf e; 
     b' <- genBloco c tab fun b; 
-    return (li++":\n"++e'++lv++":\n"++b'++"\tgoto "++li++"\n"++lf++":\n")}
+    return (li++":\n"++e'++lv++":\n"++b'++"\tgoto "++li++"\n"++lf++":\n")
+}
 
 -- gerar nome p = fst $ runState (genProg nome p) 0
